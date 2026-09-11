@@ -1,34 +1,11 @@
-# Frontier Command 1.0
+# Frontier Command 1.0 release candidate
 
-Release build prepared 2026-09-11 for Issue #1.
+Guidance revision 0.2: original civic expedition strategy in Ashwater Basin. Completion evidence will be recorded in FINAL_QA_REPORT.md after final verification.
 
-Four settlers land in Ashwater Basin. Establish a home through physical resource work and construction, develop a powered economy, and prepare for the attention your growth attracts. The game continues as a sandbox after the colony establishes a frontier presence.
+Four settlers establish a settlement, organize labor and care, and restore a water station, survey archive and warning relay. The same people gather/build, recover from injuries and take field duty, so expeditions compete with civilian production. Homes, a shared Commons and three work charters make settlement organization consequential. Three restorations plus a healthy, connected community earn Independent Basin; sandbox play continues.
 
-## Included
+The release contains twelve mechanically distinct structures, three improvements, original procedural world art and synthesized audio, group/direct controls, autonomous work, visible hauling/construction, warnings/combat/retreat, pause/settings and portable saves. New format 2 preserves civic/expedition state and migrates format 1.
 
-- Named people with specialties, priorities, hunger, rest, health and morale; autonomous work plus direct individual/group orders.
-- Physical inventories, gathering, hauling, visible cargo, construction deliveries and staged structures.
-- Ten structure types covering storage, housing, food, generation, workshop improvements, ranger training, sensors, defenses and barriers.
-- Mechanical terrain, routing, line of sight, fertile soil, channel movement penalties and worn routes.
-- Tools, defense equipment and medicine improvements; recruitment up to 16 settlers.
-- Exposure contributors, 20-minute safe opening, directional warnings, bounded contacts, retreat, salvage, repair and replacement settlers.
-- Command Hub reconstruction using salvaged supplies after destruction.
-- Day/night atmosphere, lights, quiet routines and original synthesized audio with volume control.
-- Selection/command feedback, map navigation, placement previews, in-game onboarding and controls reference.
-- Versioned browser saves, autosave, portable import/export and validation before loading.
-- Automated simulation, browser, opening and performance checks; GitHub CI and standalone playable packaging.
+Supported: desktop Chrome/Edge, keyboard/mouse, 1280×720 or larger; Node 22+ serves the standalone offline build. One basin, up to 16 settlers; measured target load 80 structures. No copied commercial assets, runtime downloads, accounts, telemetry, mobile/touch controls, multiplayer or licensed-reference content.
 
-## Tested scope
-
-Desktop Chrome/Edge, keyboard and mouse, 1280×720 or larger; a 64×48 map, 16 settlers and an 80-building target. See [QA_REPORT.md](QA_REPORT.md) for evidence, exact checks and boundaries.
-
-## Known non-blocking limitations
-
-- One biome and sandbox mode; no multiplayer, campaign, mobile/touch or cloud saves.
-- Canvas world interaction is visual and is not a fully screen-reader-driven game. HTML controls are labeled and keyboard focus is retained.
-- Natural deposits are finite. Food production is renewable, and contacts can leave salvage.
-- Audio uses original synthesized cues/ambience, not recorded voice or a composed music soundtrack.
-- Headless performance measurements are machine-specific. Larger colonies than the stated target are not release-certified.
-- Playability/readability was reviewed by the implementation agent; this is not evidence of a broad human player study.
-
-No blocking defect is currently identified by the release checks. The QA report distinguishes executed evidence from product scope.
+Limitations: stylized procedural art; compact needs/roles/care and aid/loss memories rather than a deep relationship or body-part simulation; challenge is intentionally forgiving with a prepared ranger team. Developer-led inspection and automated input sequences are not independent human usability feedback. File-origin and subpath hosting are unsupported; use the included loopback server. Performance evidence applies to the reported machine/browser, not every laptop.

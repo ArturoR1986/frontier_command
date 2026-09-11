@@ -1,4 +1,5 @@
 import { cp, mkdir, readFile, writeFile } from 'node:fs/promises';
+import { execFileSync } from 'node:child_process';
 await mkdir('dist', { recursive: true });
 await cp('src', 'dist/src', { recursive: true });
 await cp('index.html', 'dist/index.html');
@@ -7,5 +8,7 @@ await cp('docs/CREDITS.md', 'dist/CREDITS.md');
 await cp('docs/CONTROLS.md', 'dist/CONTROLS.md');
 await writeFile('dist/README.md', '# Frontier Command playable build\n\nRequires Node.js 22+ and Chrome or Edge. Open a terminal in this extracted folder and run `node serve.mjs`, then open http://127.0.0.1:4173. No install or internet connection is required. Do not open index.html directly with file://.\n\nUse Help in the game for controls. Save is browser-local; Menu > Export save creates a portable backup. See CONTROLS.md and CREDITS.md.\n');
 const pkg = JSON.parse(await readFile('package.json', 'utf8'));
-await writeFile('dist/build.json', JSON.stringify({ name: pkg.name, version: pkg.version }, null, 2) + '\n');
+let sourceCommit = 'source archive';
+try { sourceCommit = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(); } catch {}
+await writeFile('dist/build.json', JSON.stringify({ name: pkg.name, version: pkg.version, sourceCommit }, null, 2) + '\n');
 console.log(`Built ${pkg.name} ${pkg.version} in dist/`);

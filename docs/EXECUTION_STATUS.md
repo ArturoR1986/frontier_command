@@ -1,3 +1,5 @@
+> SUPERSEDED COMPLETION CLAIM: This record covers the earlier brief only. Guidance revision 0.2 was subsequently discovered on main. See PRODUCTION_STATUS.md and the eventual FINAL_QA_REPORT.md for current status. Prior tests remain real evidence of the earlier implementation.
+
 # Issue #1 execution status
 
 Implementation owner: Codex, acting on Arturo Ruiz Albarrán's assignment.

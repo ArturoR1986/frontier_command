@@ -1,5 +1,6 @@
 import { BUILDINGS, UPGRADES, WIDTH, HEIGHT } from './catalog.js';
-import { newGame, tick, stocks, capacity, order, place, remove, research, train, invite, objective } from './simulation.js';
+import { newGame, tick, stocks, capacity, order, place, remove, research, train, invite, objective, activateSite } from './simulation.js';
+import { CHARTERS, setCharter, setDuty, assignHome, cohesion } from './community.js';
 import { serialize, deserialize } from './save.js';
 import { render, zoom, screenToWorld, worldToScreen, GLYPHS } from './render.js';
 import { occupied, distance, center } from './world.js';
@@ -40,7 +41,31 @@ function hit(p) {
   return state.people.find(q => distance(p, q) < 0.65) || state.hostiles.find(q => distance(p, q) < 0.65) || occupied(state, Math.floor(p.x), Math.floor(p.y)) || state.nodes.find(q => q.amount > 0 && distance(p, q) < 0.65);
 }
 function bar(label, value) { return `<div><div class="bar-label">${label}<span>${Math.round(value)}%</span></div><div class="bar"><i style="width:${Math.max(0, Math.min(100, value))}%"></i></div></div>`; }
+function updateCommunity() {
+  markup('community-content', `<p>Cohesion ${Math.round(cohesion(state))}% · ${state.community.treated} treatments · ${state.sites.filter(s => s.restored).length}/3 installations restored</p><h3>Settlement charter</h3><div class="actions">${Object.entries(CHARTERS).map(([k, c]) => `<button data-charter="${k}" class="${state.community.charter === k ? 'active' : ''}" title="${c.description}">${c.name}${state.community.charter === k ? ' ✓' : ''}</button>`).join('')}</div><p>${CHARTERS[state.community.charter].description}</p><h3>People and responsibilities</h3><p>Field duty suspends civilian work and holds position. Release resumes interrupted work. Wounds reduce work and combat; caregivers carry two food to treat a civilian patient. Homes hold four people; a powered Commons restores social connection with shared meals.</p>${state.people.map(p => `<article class="community-person"><strong>${escape(p.name)}</strong> · ${p.wounded ? 'WOUNDED · 60% work, 65% damage' : 'Fit'} · Connection ${Math.round(p.social)}%<div class="actions"><button data-duty="${p.id}">${p.drafted ? 'Release to civilian work' : 'Assign field duty'}</button><button data-care="${p.id}">Caregiver ${p.caregiver ? '✓' : 'off'}</button><button data-home="${p.id}">Home: ${p.home ? escape(BUILDINGS[state.buildings.find(b => b.id === p.home)?.kind]?.name || 'Lost') + ' #' + p.home : 'Unassigned'} · cycle</button></div><small>${p.memories.map(m => escape(m.text)).join(' · ') || 'A new life in Ashwater.'}</small></article>`).join('')}<h3>Restore the basin</h3><p>Scout each marked site, then choose when to engage its disclosed defenders. Once clear, restoration consumes 40 alloy and 20 biomass through normal construction. Restored stations supply six local power. Restore all three with a powered Commons, four fit settlers and 55% cohesion to establish an independent settlement. Play continues afterward.</p>${state.sites.map(s => `<article class="community-person"><strong>${escape(s.name)}</strong><p>${escape(s.description)}<br>${s.restored ? 'RESTORED' : s.building ? 'Construction underway' : `${s.guards} defenders · ${s.activated ? 'Site activated' : 'Awaiting expedition'}`}</p><div class="actions"><button data-site-focus="${s.id}">Locate on map</button><button data-site="${s.id}" ${s.restored || s.building ? 'disabled' : ''}>${!s.activated && s.guards ? 'Engage defenders' : 'Restore · 40 A / 20 B'}</button></div></article>`).join('')}`);
+}
+$('community').onclick = () => { updateCommunity(); $('community-dialog').showModal(); keys.clear(); };
+$('close-community').onclick = () => $('community-dialog').close();
+$('jump-sites').onclick = () => $('community-content').querySelector('[data-site-focus]')?.closest('article').previousElementSibling?.scrollIntoView({ block: 'start' });
+$('community-content').onclick = e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.charter) setCharter(state, b.dataset.charter);
+  const p = state.people.find(p => p.id === Number(b.dataset.duty || b.dataset.care || b.dataset.home));
+  if (b.dataset.duty && p) setDuty(state, [p.id], !p.drafted);
+  if (b.dataset.care && p) p.caregiver = !p.caregiver;
+  if (b.dataset.home && p) {
+    const homes = state.buildings.filter(b => b.complete && ['hub', 'habitat'].includes(b.kind));
+    const index = homes.findIndex(b => b.id === p.home);
+    let assigned = false;
+    for (let i = 1; i <= homes.length; i++) if (assignHome(state, p.id, homes[(index + i) % homes.length].id)) { assigned = true; break; }
+    if (!assigned) notify('All homes have four residents. Build another habitat.');
+  }
+  if (b.dataset.siteFocus) { const site = state.sites.find(s => s.id === Number(b.dataset.siteFocus)); ui.view.x = site.x + 1; ui.view.y = site.y + 1; $('community-dialog').close(); notify('Send a settler to scout this marked location, then open Community to begin restoration.'); }
+  if (b.dataset.site) { activateSite(state, Number(b.dataset.site)); $('community-dialog').close(); notify(state.events.at(-1).text); }
+  updateUI();
+};
 function updateUI() {
+  if ($('community-dialog').open) updateCommunity();
   const stock = stocks(state);
   $('stocks').innerHTML = [['◇', 'ALLOY', Math.floor(stock.alloy)], ['♧', 'BIOMASS', Math.floor(stock.biomass)], ['◒', 'FOOD', Math.floor(stock.food)], ['ϟ', 'POWER', `${state.power.used}/${state.power.supply}`]].map(([icon, name, value]) => `<div class="metric"><small>${name}</small><i>${icon}</i>${value}</div>`).join('');
   const dayPart = state.time % 600;
@@ -66,13 +91,13 @@ function updateUI() {
   else if (selected) html = `<h3>Basin scavenger</h3><p>${selected.retreat ? 'Retreating' : 'Approaching the settlement'} · ${Math.ceil(selected.hp)} health</p><p>Select Kei and right-click this contact to engage.</p>`;
   markup('inspection', html);
   $('phase').textContent = state.threat.phase;
-  $('threat').innerHTML = `<div class="exposure"><strong>${state.threat.exposure}</strong><span>EXPOSURE</span></div><p class="muted">${Object.entries(state.threat.contributors).map(([k, v]) => `${k} ${v}`).join(' · ')}</p>${state.threat.warning ? `<div class="warning">⚠ ${state.threat.warning.count} contacts from the ${state.threat.warning.direction.toUpperCase()}<br>ETA ${Math.max(0, Math.ceil(state.threat.warning.arrival - state.time))}s · Rally Kei, check powered defenses.</div>` : `<p class="muted">${state.time < 1200 ? `Learning window · ${Math.ceil((1200 - state.time) / 60)} min of safe settlement building.` : state.hostiles.length ? `${state.hostiles.length} contacts in the basin. Protect your people.` : 'Listen to the horizon. Growth draws attention.'}</p>`}`;
+  $('threat').innerHTML = `<div class="exposure"><strong>${state.threat.exposure}</strong><span>EXPOSURE</span></div><p class="muted">${Object.entries(state.threat.contributors).map(([k, v]) => `${k} ${v}`).join(' · ')}</p>${state.threat.warning ? `<div class="warning">⚠ ${state.threat.warning.count} contacts from the ${state.threat.warning.direction.toUpperCase()}<br>ETA ${Math.max(0, Math.ceil(state.threat.warning.arrival - state.time))}s · Rally Kei, check powered defenses.</div>` : `<p class="muted">${state.time < 1200 && !state.hostiles.length ? `Learning window · ${Math.ceil((1200 - state.time) / 60)} min of safe settlement building.` : state.hostiles.length ? `${state.hostiles.length} contacts in the basin. Protect your people.` : 'Listen to the horizon. Growth draws attention.'}</p>`}`;
   $('journal').innerHTML = [...state.events].reverse().slice(0, 5).map(e => `<div class="journal-entry"><time>${Math.floor(e.time / 60)}:${String(Math.floor(e.time % 60)).padStart(2, '0')}</time>${escape(e.text)}</div>`).join('');
   $('zoom-level').textContent = `${Math.round(ui.view.scale / 32 * 100)}%`;
   const latest = state.events.at(-1);
   if (latest && latest.text !== lastEvent) { lastEvent = latest.text; if (['warning', 'danger'].includes(latest.tone)) audio.tone('warning'); }
 }
-$('buildings').innerHTML = Object.entries(BUILDINGS).map(([k, b]) => `<button data-build="${k}" title="${b.name}: ${b.description}"><span class="glyph">${GLYPHS[k]}</span>${b.name.replace('Storage ', '').replace('Sentry ', '').replace('Hydro ', '').replace('Sensor Mast', 'Sensor')}<small>${b.alloy} A · ${b.biomass} B</small></button>`).join('');
+$('buildings').innerHTML = Object.entries(BUILDINGS).filter(([k]) => k !== 'relay').map(([k, b]) => `<button data-build="${k}" title="${b.name}: ${b.description}"><span class="glyph">${GLYPHS[k]}</span>${b.name.replace('Storage ', '').replace('Sentry ', '').replace('Hydro ', '').replace('Sensor Mast', 'Sensor')}<small>${b.alloy} A · ${b.biomass} B</small></button>`).join('');
 $('buildings').addEventListener('click', e => { const b = e.target.closest('[data-build]'); if (!b) return; ui.build = b.dataset.build; for (const button of $('buildings').children) button.classList.toggle('active', button === b); notify(`${BUILDINGS[ui.build].name}: click valid ground to place. Escape cancels.`); audio.tone(); });
 $('roster').addEventListener('click', e => { const b = e.target.closest('[data-person]'); if (b) select(Number(b.dataset.person), e.shiftKey); });
 $('inspection').addEventListener('click', e => {
@@ -120,7 +145,7 @@ canvas.addEventListener('contextmenu', e => {
 canvas.addEventListener('wheel', e => { e.preventDefault(); const r = canvas.getBoundingClientRect(); zoom(ui.view, e.deltaY > 0 ? 0.9 : 1.1, e.clientX - r.left, e.clientY - r.top); }, { passive: false });
 function cancelBuild() { ui.build = null; for (const b of $('buildings').children) b.classList.remove('active'); }
 document.addEventListener('keydown', e => {
-  if (e.target.matches('input') || $('welcome').open || $('help-dialog').open) return;
+  if (e.target.matches('input, select') || document.querySelector('dialog[open]')) return;
   const k = e.key.toLowerCase(); keys.add(k);
   if ([' ', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(k)) e.preventDefault();
   if (e.repeat) return;
@@ -155,7 +180,7 @@ document.addEventListener('visibilitychange', () => { last = performance.now(); 
 function frame(now) {
   try {
     const dt = Math.min(0.1, (now - last) / 1000); last = now;
-    const modal = $('welcome').open || $('help-dialog').open;
+    const modal = Boolean(document.querySelector('dialog[open]'));
     if (!modal) {
       ui.view.x += ((keys.has('d') || keys.has('arrowright') ? 1 : 0) - (keys.has('a') || keys.has('arrowleft') ? 1 : 0)) * dt * 18;
       ui.view.y += ((keys.has('s') || keys.has('arrowdown') ? 1 : 0) - (keys.has('w') || keys.has('arrowup') ? 1 : 0)) * dt * 18;

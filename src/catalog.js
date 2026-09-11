@@ -1,4 +1,4 @@
-export const VERSION = 1;
+export const VERSION = 2;
 export const WIDTH = 64;
 export const HEIGHT = 48;
 export const BUILDINGS = {
@@ -11,7 +11,9 @@ export const BUILDINGS = {
   barracks: { name: 'Barracks', w: 3, h: 2, alloy: 32, biomass: 12, hp: 400, demand: 3, color: '#8ca7a0', description: 'Train any selected colonist as a ranger for 12 alloy.' },
   turret: { name: 'Sentry Turret', w: 1, h: 1, alloy: 28, biomass: 4, hp: 280, demand: 4, color: '#cfbc84', description: 'Powered perimeter defense. Rocks and walls block its fire.' },
   sensor: { name: 'Sensor Mast', w: 1, h: 1, alloy: 24, biomass: 8, hp: 180, demand: 2, color: '#86bbc6', description: 'Longer warning time and wider map visibility.' },
-  wall: { name: 'Barrier', w: 1, h: 1, alloy: 4, biomass: 2, hp: 500, demand: 0, color: '#9b9990', description: 'Blocks movement and fire. Leave a gate-shaped gap.' }
+  wall: { name: 'Barrier', w: 1, h: 1, alloy: 4, biomass: 2, hp: 500, demand: 0, color: '#9b9990', description: 'Blocks movement and fire. Leave a gate-shaped gap.' },
+  commons: { name: 'Commons', w: 3, h: 3, alloy: 28, biomass: 24, hp: 380, demand: 1, color: '#c2ad8b', description: 'Shared meals and conversation restore social wellbeing. Each visit costs one food.' },
+  relay: { name: 'Restoration Station', w: 2, h: 2, alloy: 40, biomass: 20, hp: 500, power: 6, demand: 0, color: '#a8c3c5', description: 'Restores a surveyed basin installation. Provides 6 local power and its unique network benefit.' }
 };
 export const UPGRADES = {
   tools: { name: 'Field tools', cost: 45, description: 'Gather and build 40% faster.' },

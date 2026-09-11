@@ -1,5 +1,6 @@
 import { VERSION, BUILDINGS, PEOPLE, UPGRADES, WIDTH, HEIGHT } from './catalog.js';
 import { generate, random, cell, inside, walkable, occupied, path, adjacent, distance, center, lineOfSight } from './world.js';
+import { initializeCommunity, CHARTERS, setDuty, remember, cohesion } from './community.js';
 
 const empty = () => ({ alloy: 0, biomass: 0, food: 0 });
 export function event(s, text, tone = 'info') {
@@ -12,7 +13,7 @@ export function building(s, kind, x, y, complete = false) {
 }
 export function person(s, index, x, y) {
   const [name, role, trait, color, priorities] = PEOPLE[index % PEOPLE.length];
-  return { id: s.nextId++, name: index < 4 ? name : ['Nico', 'Sora', 'Ivo', 'Ada', 'Remy', 'Jules', 'Sol', 'Ash'][index - 4] || `Settler ${index + 1}`, role, trait, color, priorities: { ...priorities }, x, y, hp: 100, hunger: 95, rest: 95, morale: 80, ranger: role === 'Security', cargo: null, job: null, route: [], routeVersion: -1, direct: false, activity: 'Taking in the basin', cooldown: 0, wait: 0 };
+  return { id: s.nextId++, name: index < 4 ? name : ['Nico', 'Sora', 'Ivo', 'Ada', 'Remy', 'Jules', 'Sol', 'Ash'][index - 4] || `Settler ${index + 1}`, role, trait, color, priorities: { ...priorities }, x, y, hp: 100, hunger: 95, rest: 95, morale: 80, ranger: role === 'Security', cargo: null, job: null, route: [], routeVersion: -1, direct: false, activity: 'Taking in the basin', cooldown: 0, wait: 0, drafted: false, caregiver: role === 'Grower', wounded: false, social: 70, home: null, memories: [], suspended: null };
 }
 export function newGame(seed = 1986) {
   const s = { version: VERSION, seed, rng: seed >>> 0, nextId: 1, time: 0, buildings: [], people: [], nodes: [], hostiles: [], drops: [], events: [], effects: [], upgrades: [], research: null, topology: 0, stats: { gathered: 0, delivered: 0, built: 0, defeated: 0, arrivals: 0 }, threat: { exposure: 0, phase: 'Landing', warning: null, nextContact: 0, encounters: 0, lastContact: 0 }, settings: { volume: 0.25, guide: true, speed: 1 }, ended: false };
@@ -21,6 +22,9 @@ export function newGame(seed = 1986) {
   s.buildings.push(hub);
   generate(s);
   for (let i = 0; i < 4; i++) s.people.push(person(s, i, 20.5, 22.5 + i));
+  initializeCommunity(s);
+  for (const site of s.sites) for (let y = site.y - 1; y <= site.y + 2; y++) for (let x = site.x - 1; x <= site.x + 2; x++) s.terrain[cell(x, y)] = 0;
+  s.nodes = s.nodes.filter(n => !s.sites.some(t => n.x >= t.x && n.x < t.x + 2 && n.y >= t.y && n.y < t.y + 2));
   event(s, 'Ashwater Basin. Four people, one landing hub. Make this place your own.');
   recompute(s);
   reveal(s);
@@ -34,7 +38,7 @@ export function stocks(s) {
 export function capacity(s) { return s.buildings.filter(b => b.complete).reduce((n, b) => n + (b.kind === 'hub' || b.kind === 'habitat' ? 4 : 0), 0); }
 export function depots(s) { return s.buildings.filter(b => b.hp > 0 && b.complete && ['hub', 'depot'].includes(b.kind)); }
 function nearest(list, p) { return [...list].sort((a, b) => distance(p, a.kind in BUILDINGS ? center(a) : a) - distance(p, b.kind in BUILDINGS ? center(b) : b)); }
-function find(s, id) { return [...s.buildings, ...s.nodes, ...s.drops, ...s.hostiles].find(o => o.id === id); }
+function find(s, id) { return [...s.buildings, ...s.nodes, ...s.drops, ...s.hostiles, ...s.people].find(o => o.id === id); }
 function drop(s, p) {
   if (!p.cargo) return;
   s.drops.push({ id: s.nextId++, x: p.x, y: p.y, kind: p.cargo.kind, amount: p.cargo.amount });
@@ -71,6 +75,7 @@ export function order(s, ids, type, target) {
 export function placement(s, kind, x, y) {
   const d = BUILDINGS[kind];
   if (!d || kind === 'hub' && s.buildings.some(b => b.kind === 'hub')) return 'Choose a buildable structure. Only one Command Hub can operate.';
+  if (kind === 'relay' && !s.sites.some(t => t.x === x && t.y === y && t.activated && !t.restored)) return 'Activate a known restoration site from the Frontier panel first.';
   for (let yy = y; yy < y + d.h; yy++) for (let xx = x; xx < x + d.w; xx++) {
     if (!inside(xx, yy)) return 'Outside the basin.';
     if (!s.explored[cell(xx, yy)]) return 'Scout this ground first.';
@@ -133,13 +138,14 @@ export function invite(s) {
   if (!spots.length) return false;
   const p = person(s, 4 + s.stats.arrivals++, spots[0].x, spots[0].y);
   s.people.push(p); event(s, `${p.name} answered your beacon. A new life in the basin.`);
+  initializeCommunity(s);
   return true;
 }
 export function recompute(s) {
   const complete = s.buildings.filter(b => b.complete && b.hp > 0);
   const sources = complete.filter(b => BUILDINGS[b.kind].power);
   let supply = sources.reduce((n, b) => n + BUILDINGS[b.kind].power, 0), used = 0;
-  const priorities = ['hub', 'generator', 'habitat', 'farm', 'turret', 'sensor', 'barracks', 'workshop', 'depot', 'wall'];
+  const priorities = ['hub', 'generator', 'relay', 'habitat', 'farm', 'commons', 'turret', 'sensor', 'barracks', 'workshop', 'depot', 'wall'];
   for (const b of s.buildings) b.powered = false;
   for (const b of [...complete].sort((a, b) => priorities.indexOf(a.kind) - priorities.indexOf(b.kind))) {
     const demand = BUILDINGS[b.kind].demand;
@@ -165,7 +171,7 @@ function routeTo(s, p, target, dt, edge = true) {
     p.routeVersion = s.topology;
     if (p.route === null) { p.route = []; return -1; }
   }
-  let budget = dt * (p.hunger < 15 || p.rest < 15 ? 1.05 : 2.2);
+  let budget = dt * (p.hunger < 15 || p.rest < 15 || p.wounded ? 1.05 : 2.2);
   while (budget > 0 && p.route.length) {
     const next = p.route[0], d = distance(p, next);
     const terrain = s.terrain[cell(p.x, p.y)];
@@ -199,7 +205,17 @@ function chooseConstruction(s, p, only = null) {
   return false;
 }
 function choose(s, p) {
+  if (p.drafted) {
+    const enemy = nearest(s.hostiles.filter(h => !h.retreat && distance(h, p) < (p.ranger ? 7 : 2)), p)[0];
+    if (enemy) job(p, 'attack', enemy); else { p.activity = 'Holding field position'; p.wait = 0.5; }
+    return;
+  }
   if (p.cargo) {
+    if (p.cargo.purpose === 'care') {
+      const patient = s.people.find(q => q.id === p.cargo.destination && q.wounded);
+      if (patient) { job(p, 'care', patient); return; }
+      delete p.cargo.purpose; delete p.cargo.destination;
+    }
     const destination = s.buildings.find(b => b.id === p.cargo.destination && !b.complete && path(s, p, b, true) !== null);
     if (!destination) delete p.cargo.destination;
     const depot = destination || accessible(s, p, depots(s));
@@ -214,8 +230,17 @@ function choose(s, p) {
     if (depot) { job(p, 'eat', depot); return; }
   }
   if (p.rest < 25 || (s.time % 600 > 420 && p.rest < 65) || p.hp < 65) {
-    const home = accessible(s, p, s.buildings.filter(b => b.complete && ['habitat', 'hub'].includes(b.kind)));
+    const home = s.buildings.find(b => b.id === p.home && b.complete && path(s, p, b, true) !== null) || accessible(s, p, s.buildings.filter(b => b.complete && ['habitat', 'hub'].includes(b.kind)));
     if (home) { job(p, 'sleep', home); return; }
+  }
+  if (p.caregiver) {
+    const patient = accessible(s, p, s.people.filter(q => q.id !== p.id && q.wounded && !q.drafted && !s.people.some(r => r.id !== p.id && (r.job?.patient === q.id || r.job?.type === 'care' && r.job.target === q.id))));
+    const pantry = patient && accessible(s, p, depots(s).filter(b => b.inventory.food >= 2));
+    if (pantry) { job(p, 'fetchCare', pantry, { patient: patient.id }); return; }
+  }
+  if (p.social < 50 && stocks(s).food > 0) {
+    const commons = accessible(s, p, s.buildings.filter(b => b.kind === 'commons' && b.complete && b.powered));
+    if (commons) { job(p, 'socialize', commons); return; }
   }
   const tasks = Object.entries(p.priorities).sort((a, b) => a[1] - b[1]);
   for (const [type, priority] of tasks) {
@@ -256,20 +281,36 @@ function work(s, p, dt) {
     const range = p.ranger ? 6 : 1.6;
     if (distance(p, target) <= range && lineOfSight(s, p, target)) {
       p.route = [];
-      if (p.cooldown <= 0) { target.hp -= (p.ranger ? 15 : 5) * (s.upgrades.includes('armor') ? 1.4 : 1); p.cooldown = 1.2; s.effects.push({ x: p.x, y: p.y, tx: target.x, ty: target.y, life: 0.2, type: 'shot' }); }
+      if (p.cooldown <= 0) { target.hp -= (p.ranger ? 15 : 5) * (s.upgrades.includes('armor') ? 1.4 : 1) * (p.wounded ? 0.65 : 1); p.cooldown = 1.2; s.effects.push({ x: p.x, y: p.y, tx: target.x, ty: target.y, life: 0.2, type: 'shot' }); }
       return;
     }
     if (routeTo(s, p, target, dt) < 0) clear(p);
     return;
   }
-  const descriptions = { move: 'Moving', gather: `Collecting ${target.kind}`, fetch: `Fetching ${j.kind}`, deliver: `Delivering ${p.cargo?.kind}`, deposit: `Hauling ${p.cargo?.kind} to storage`, build: 'Constructing', grow: target.growth >= 100 ? 'Harvesting' : 'Tending crops', eat: 'Going to eat', sleep: 'Returning to rest', pickup: 'Recovering cargo', repair: 'Repairing' };
+  const descriptions = { move: p.drafted ? 'Field movement' : 'Moving', gather: `Collecting ${target.kind}`, fetch: `Fetching ${j.kind}`, deliver: `Delivering ${p.cargo?.kind}`, deposit: `Hauling ${p.cargo?.kind} to storage`, build: 'Constructing', grow: target.growth >= 100 ? 'Harvesting' : 'Tending crops', eat: 'Going to eat', sleep: 'Returning to rest', pickup: 'Recovering cargo', repair: 'Repairing', fetchCare: 'Collecting treatment provisions', care: `Treating ${target.name}`, socialize: 'Sharing a meal at the Commons' };
   p.activity = descriptions[j.type] || j.type;
   const reached = routeTo(s, p, target, dt, j.type !== 'move');
   if (reached < 0) { if (p.direct) event(s, `${p.name}: route is blocked; order cancelled.`, 'warning'); clear(p); p.wait = 3; return; }
   if (!reached) return;
-  const efficiency = (s.upgrades.includes('tools') ? 1.4 : 1) * (j.type === 'build' && p.role === 'Engineer' || j.type === 'gather' && p.role === 'Prospector' ? 1.25 : 1);
+  const efficiency = (s.upgrades.includes('tools') ? 1.4 : 1) * (j.type === 'build' && p.role === 'Engineer' || j.type === 'gather' && p.role === 'Prospector' ? 1.25 : 1) * CHARTERS[s.community.charter].work * (p.wounded ? 0.6 : 1) * (p.morale < 35 ? 0.75 : 1);
   j.work += dt * efficiency;
   switch (j.type) {
+    case 'fetchCare': {
+      const patient = s.people.find(q => q.id === j.patient && q.wounded);
+      if (patient && target.inventory.food >= 2 && !p.cargo) { target.inventory.food -= 2; p.cargo = { kind: 'food', amount: 2, purpose: 'care', destination: patient.id }; }
+      clear(p); break;
+    }
+    case 'care':
+      if (!target.wounded || !p.cargo || p.cargo.purpose !== 'care') { clear(p); break; }
+      if (j.work * CHARTERS[s.community.charter].care >= 8) {
+        target.wounded = false; target.hp = Math.min(100, target.hp + 30); target.social = Math.min(100, target.social + 12);
+        remember(target, s.time, `Cared for by ${p.name}`); remember(p, s.time, `Helped ${target.name} recover`);
+        p.cargo = null; s.community.treated++; event(s, `${p.name} treated ${target.name}. Field capability restored.`, 'success'); clear(p);
+      }
+      break;
+    case 'socialize':
+      if (j.work >= 7) { if (target.powered && pay(s, 'food', 1)) { p.social = Math.min(100, p.social + 40); s.community.sharedMeals++; remember(p, s.time, 'Shared supper at the Commons'); } clear(p); }
+      break;
     case 'move': clear(p); p.wait = 1; break;
     case 'gather':
       if (p.cargo) { clear(p); break; }
@@ -324,9 +365,9 @@ function work(s, p, dt) {
       break;
     case 'sleep':
       p.activity = 'Sleeping';
-      p.rest = Math.min(100, p.rest + dt * (target.kind === 'habitat' && target.powered ? 3 : 1.5));
-      p.hp = Math.min(100, p.hp + dt * (s.upgrades.includes('medicine') ? 0.8 : 0.4));
-      if (p.rest >= 95 && p.hp >= 95 || p.hunger < 20) clear(p);
+      p.rest = Math.min(100, p.rest + dt * (target.kind === 'habitat' && target.powered ? 3 : 1.5) * CHARTERS[s.community.charter].care);
+      p.hp = Math.min(p.wounded ? 75 : 100, p.hp + dt * (s.upgrades.includes('medicine') ? 0.8 : 0.4));
+      if (p.rest >= 95 && p.hp >= (p.wounded ? 75 : 95) || p.hunger < 20) clear(p);
       break;
     case 'repair':
       if (j.work >= 2) { if (target.hp < BUILDINGS[target.kind].hp && pay(s, 'alloy', 1)) target.hp = Math.min(BUILDINGS[target.kind].hp, target.hp + 25); else clear(p); j.work = 0; }
@@ -342,14 +383,36 @@ export function spawnContact(s, count = 2, direction = 'east') {
   }
   event(s, `Contact from the ${direction}. Protect the colony; wounded scavengers may retreat.`, 'danger');
 }
+export function activateSite(s, id) {
+  const site = s.sites.find(t => t.id === id);
+  if (!site || site.restored || site.building) return false;
+  if (!s.explored[cell(site.x, site.y)]) { event(s, 'Scout the installation before committing a restoration team.', 'warning'); return false; }
+  if (s.hostiles.some(h => h.site === id)) { event(s, `${site.name}: clear or drive off its defenders first.`, 'warning'); return false; }
+  if (!site.activated && site.guards > 0) {
+    site.activated = true;
+    const before = s.hostiles.length;
+    spawnContact(s, site.guards, 'east');
+    const spaces = [];
+    for (let y = site.y - 3; y <= site.y + 3; y++) for (let x = site.x - 3; x <= site.x + 3; x++) if (walkable(s, x, y)) spaces.push({ x: x + 0.5, y: y + 0.5 });
+    for (const [i, h] of s.hostiles.slice(before).entries()) { Object.assign(h, spaces[(i * 3) % spaces.length]); h.site = id; h.name = 'Station defender'; }
+    event(s, `${site.name}: ${site.guards} disclosed defenders hold this installation. Mobilize a team or withdraw.`, 'warning');
+    return true;
+  }
+  site.activated = true;
+  const b = place(s, 'relay', site.x, site.y);
+  if (!b) return false;
+  site.building = b.id;
+  event(s, `Restoring ${site.name}: deliver 40 alloy and 20 biomass, then construct the station.`);
+  return true;
+}
 function threats(s, dt) {
   const t = s.threat;
   t.phase = s.time < 300 ? 'Landing' : t.encounters ? 'Adaptation' : 'Settlement';
   // A safe learning floor is only a guard; colony exposure is the trigger.
   if (!t.warning && !s.hostiles.length && s.time >= 1200 && t.exposure >= 35 && s.time >= t.nextContact) {
     const sensor = s.buildings.some(b => b.kind === 'sensor' && b.powered);
-    t.warning = { direction: random(s) > 0.5 ? 'east' : 'west', arrival: s.time + (sensor ? 150 : 90), count: t.encounters === 0 ? 2 : Math.min(6, Math.max(2, Math.ceil(s.people.length / 2)), 2 + Math.floor(Math.max(0, t.exposure - 65) / 25)) };
-    event(s, `Tracks detected ${t.warning.direction}. ${t.warning.count} contacts, ${sensor ? 150 : 90}s to arrival. Rally Kei and check defenses.`, 'warning');
+    t.warning = { direction: random(s) > 0.5 ? 'east' : 'west', arrival: s.time + (sensor ? 150 : 90) + (s.sites.some(t => t.kind === 'signal' && t.restored) ? 60 : 0), count: t.encounters === 0 ? 2 : Math.min(6, Math.max(2, Math.ceil(s.people.length / 2)), 2 + Math.floor(Math.max(0, t.exposure - 65) / 25)) };
+    event(s, `Tracks detected ${t.warning.direction}. ${t.warning.count} contacts, ${Math.round(t.warning.arrival - s.time)}s to arrival. Rally Kei and check defenses.`, 'warning');
   }
   if (t.warning) {
     t.phase = 'Warning';
@@ -358,14 +421,16 @@ function threats(s, dt) {
   if (s.hostiles.length) t.phase = 'Contact';
   for (const h of s.hostiles) {
     h.age += dt; h.cooldown -= dt;
-    if (h.hp < h.maxHp * 0.3 || h.age > 150) h.retreat = true;
+    if (h.hp < h.maxHp * 0.3 || !h.site && h.age > 150) h.retreat = true;
     if (h.retreat) {
       const exit = { x: h.x < WIDTH / 2 ? 1.5 : WIDTH - 1.5, y: h.y };
       if (routeTo(s, h, exit, dt, false) < 0) { h.age += 10; }
       if (distance(h, exit) < 1 || h.age > 190) h.escaped = true;
       continue;
     }
-    const target = nearest(s.people, h).find(p => distance(p, h) < 8) || s.buildings.find(b => b.kind === 'hub') || s.people[0];
+    const nearby = nearest(s.people, h).find(p => distance(p, h) < 8);
+    if (h.site && !nearby) continue;
+    const target = nearby || s.buildings.find(b => b.kind === 'hub') || s.people[0];
     if (!target) { h.retreat = true; continue; }
     if (target.kind ? adjacent(h, target) : distance(h, target) < 1.7) {
       if (h.cooldown <= 0) { target.hp -= s.upgrades.includes('armor') ? 3 : 5; h.cooldown = 1.7; s.effects.push({ x: h.x, y: h.y, tx: target.x, ty: target.y, life: 0.25, type: 'hit' }); }
@@ -377,7 +442,7 @@ function threats(s, dt) {
   }
 }
 export function cleanup(s) {
-  for (const p of s.people.filter(p => p.hp <= 0)) { drop(s, p); event(s, `${p.name} was lost. The colony will remember.`, 'danger'); }
+  for (const p of s.people.filter(p => p.hp <= 0)) { drop(s, p); for (const survivor of s.people.filter(q => q.id !== p.id)) { survivor.social = Math.max(0, survivor.social - 12); remember(survivor, s.time, `Remembering ${p.name}`); } event(s, `${p.name} was lost. The colony will remember.`, 'danger'); }
   s.people = s.people.filter(p => p.hp > 0);
   for (const b of s.buildings.filter(b => b.hp <= 0)) {
     for (const [kind, amount] of Object.entries(b.inventory)) if (amount) s.drops.push({ id: s.nextId++, x: b.x + 0.5, y: b.y + 0.5, kind, amount });
@@ -397,7 +462,7 @@ export function tick(s, dt = 0.1) {
   if (Math.floor(s.time) !== before) { recompute(s); reveal(s); }
   for (const b of s.buildings) {
     b.cooldown -= dt;
-    if (b.kind === 'farm' && b.complete && b.powered) { b.tended = Math.max(0, b.tended - dt); if (b.tended > 0) b.growth = Math.min(100, b.growth + dt * (s.terrain[cell(b.x, b.y)] === 1 ? 1.5 : 1)); }
+    if (b.kind === 'farm' && b.complete && b.powered) { b.tended = Math.max(0, b.tended - dt); if (b.tended > 0) b.growth = Math.min(100, b.growth + dt * (s.terrain[cell(b.x, b.y)] === 1 ? 1.5 : 1) * (s.sites.some(t => t.kind === 'water' && t.restored) ? 1.25 : 1)); }
     if (b.kind === 'turret' && b.complete && b.powered && b.cooldown <= 0) {
       const c = center(b), h = nearest(s.hostiles, c).find(h => distance(c, h) < 8 && lineOfSight(s, c, h));
       if (h) { h.hp -= s.upgrades.includes('armor') ? 24 : 18; b.cooldown = 1.2; s.effects.push({ ...c, tx: h.x, ty: h.y, life: 0.2, type: 'shot' }); }
@@ -405,15 +470,20 @@ export function tick(s, dt = 0.1) {
   }
   for (const p of s.people) {
     p.cooldown -= dt; p.wait -= dt;
-    p.hunger = Math.max(0, p.hunger - dt * 0.045); p.rest = Math.max(0, p.rest - dt * 0.025);
+    if (p.home && !s.buildings.some(b => b.id === p.home && b.complete && b.hp > 0)) p.home = null;
+    const charter = CHARTERS[s.community.charter];
+    p.hunger = Math.max(0, p.hunger - dt * 0.045 * charter.hunger); p.rest = Math.max(0, p.rest - dt * 0.025 * charter.fatigue);
+    p.social = Math.max(0, p.social - dt * 0.018 * charter.fatigue);
+    if (p.hp < 50) p.wounded = true;
+    if (p.drafted && (p.hunger < 8 || p.rest < 8)) { setDuty(s, [p.id], false); clear(p); event(s, `${p.name} left field duty for critical needs.`, 'warning'); }
     if (p.hunger <= 0) p.hp -= dt * 0.15;
-    p.morale = Math.max(0, Math.min(100, (p.hunger + p.rest) / 2 + (capacity(s) > s.people.length ? 8 : 0) + (s.upgrades.includes('medicine') ? 8 : 0)));
+    p.morale = Math.max(0, Math.min(100, (p.hunger + p.rest + p.social) / 3 + (p.home ? 8 : 0) + (s.upgrades.includes('medicine') ? 8 : 0)));
     if (!p.direct && p.job && !['eat', 'sleep', 'deposit', 'deliver'].includes(p.job.type) && (p.hunger < 15 || p.rest < 8 || s.hostiles.some(h => distance(h, p) < 3))) clear(p);
     if (!p.job && p.wait <= 0) choose(s, p);
     work(s, p, dt);
   }
   if (s.research && s.buildings.some(b => b.kind === 'workshop' && b.powered)) {
-    s.research.progress += dt;
+    s.research.progress += dt * (s.sites.some(t => t.kind === 'archive' && t.restored) ? 2 : 1);
     if (s.research.progress >= 90) { s.upgrades.push(s.research.kind); event(s, `${UPGRADES[s.research.kind].name} ready.`, 'success'); s.research = null; }
   }
   // Idle settlers make room for each other without becoming navigation blockers.
@@ -425,17 +495,27 @@ export function tick(s, dt = 0.1) {
     if (walkable(s, x, y)) { p.x = x; p.y = y; }
   }
   threats(s, dt);
+  for (const site of s.sites) {
+    const station = s.buildings.find(b => b.id === site.building);
+    if (station?.complete && !site.restored) { site.restored = true; event(s, `${site.name} restored. ${site.description}`, 'success'); }
+    if (site.building && !station) { site.building = null; site.restored = false; }
+  }
+  if (!s.community.achievement && s.sites.every(t => t.restored) && s.buildings.some(b => b.kind === 'commons' && b.complete && b.powered) && cohesion(s) >= 55 && s.people.filter(p => !p.wounded).length >= 4) {
+    s.community.achievement = true; event(s, 'INDEPENDENT BASIN — The water, knowledge and warning networks are restored, and the community is thriving. Continue shaping its future.', 'success');
+  }
   for (const e of s.effects) e.life -= dt;
   s.effects = s.effects.filter(e => e.life > 0);
   cleanup(s);
 }
 export function objective(s) {
   if (s.ended) return 'The settlement fell silent. Load a save or begin a new landing.';
+  if (s.community.achievement) return 'INDEPENDENT BASIN — Three networks restored and a thriving community. Continue improving your frontier.';
   if (s.stats.delivered < 8) return '1 / SETTLE IN — Select Tomas, then right-click a mineral cluster. Watch him gather, carry and deposit.';
   if (!s.buildings.some(b => b.kind === 'habitat' && b.complete)) return '2 / A PLACE TO STAY — Place a Habitat near the hub. Mara will deliver materials and build it.';
   if (!s.buildings.some(b => b.kind === 'farm' && b.complete)) return '3 / ROOTS — Build a Hydro Farm. Lena tends, harvests and hauls food. Rich green ground grows faster.';
   if (!s.buildings.some(b => b.kind === 'generator' && b.complete)) return '4 / POWER — Add a Generator within 11 tiles of your buildings. Homes and food get power first.';
   if (!s.upgrades.length) return '5 / CAPABILITY — Build a Workshop and choose an improvement. Invite settlers when you have beds and food.';
-  if (!s.threat.encounters) return '6 / HORIZON — Establish a sensor and defenses. Growth raises Exposure; the first 20 minutes remain peaceful.';
-  return 'FRONTIER ESTABLISHED — Recover, improve hauling routes and expand. The basin is yours to shape.';
+  if (!s.buildings.some(b => b.kind === 'commons' && b.complete)) return '6 / COMMUNITY — Build a Commons. Open Community to assign homes, caregivers and field duty. Train and equip a team before an expedition.';
+  if (!s.community.achievement) return `7 / RESTORE THE BASIN — ${s.sites.filter(t => t.restored).length}/3 installations restored. Open Community to locate sites and inspect defenders. Scout, prepare, then commit.`;
+  return 'INDEPENDENT BASIN — Three networks restored and a thriving community. Continue improving your frontier.';
 }

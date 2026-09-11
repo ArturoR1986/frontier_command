@@ -7,6 +7,7 @@ Native JavaScript modules, no runtime package dependencies, Canvas 2D world and 
 | catalog.js | Buildings, people, research, save version |
 | world.js | Seeded terrain, occupancy, adjacency, BFS, sight lines |
 | simulation.js | State, commands, work, needs, logistics, power, pressure, combat |
+| community.js | Civil/field duty, home assignments, charters, memories and restoration definitions |
 | save.js | Data serialization and validation before state replacement |
 | render.js | Terrain cache, dynamic world, cargo, stages, minimap |
 | audio.js | Original synthesized Web Audio cues |
@@ -22,7 +23,7 @@ Inventories belong to depots. Pickup atomically decreases its source and creates
 
 ## Saves and rendering
 
-Format 1 stores data only. Deserialization validates identity, geometry, inventories, work, needs, crop state, research, settings and threats before replacing the colony. Cargo and reservations persist, routes recalculate, and render caches rebuild. Manual and automatic browser slots remain separate; file import/export needs no backend.
+Format 2 stores data only, including suspended civilian jobs, duty, care provisions, wounds, homes, memories, charter and restoration/defender state. Deserialization validates identity, geometry, inventories, active/suspended work, needs, crop state, research, settings and threats before replacing the colony. Format 1 migrates to civic defaults and adds clear restoration sites near their intended positions, avoiding existing structures and resource nodes. Local terrain around those new sites is cleared. Cargo and reservations persist, routes recalculate, and render caches rebuild. Manual and automatic browser slots remain separate; file import/export needs no backend.
 
 Original Canvas geometry renders structures, people, equipment, cargo, crops, hardware and wear. Terrain/trails are cached in an offscreen surface and refreshed every two simulated seconds; people and structures remain dynamic. This addresses the measured full-map redraw bottleneck.
 

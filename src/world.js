@@ -43,6 +43,7 @@ export function path(s, from, target, edge = false) {
     if (edge ? adjacent(point, target) : idx === cell(target.x, target.y)) {
       const result = [];
       for (let p = idx; p !== start; p = parent[p]) result.push({ x: p % WIDTH + 0.5, y: Math.floor(p / WIDTH) + 0.5 });
+      if (!result.length) return [edge ? point : { x: target.x, y: target.y }];
       return result.reverse();
     }
     for (const [nx, ny] of [[x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]]) {

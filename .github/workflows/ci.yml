@@ -17,6 +17,7 @@ jobs:
       - run: npm install --no-save playwright@1.58.2
       - run: npx playwright install --with-deps chromium
       - run: node scripts/smoke.mjs
+      - run: node scripts/community-playtest.mjs
       - uses: actions/upload-artifact@v4
         with:
           name: frontier-command-build

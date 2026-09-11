@@ -3,7 +3,7 @@ import { cell, center } from './world.js';
 import { placement } from './simulation.js';
 
 const colors = ['#596452', '#596452', '#687362', '#736e59'];
-export const GLYPHS = { hub: '⌂', depot: '▤', habitat: '⌂', farm: '♧', generator: 'ϟ', workshop: '⚒', barracks: '⚑', turret: '⊕', sensor: '♜', wall: '▬' };
+export const GLYPHS = { hub: '⌂', depot: '▤', habitat: '⌂', farm: '♧', generator: 'ϟ', workshop: '⚒', barracks: '⚑', turret: '⊕', sensor: '♜', wall: '▬', commons: '♧', relay: '⌁' };
 export function screenToWorld(view, x, y) { return { x: (x - view.width / 2) / view.scale + view.x, y: (y - view.height / 2) / view.scale + view.y }; }
 export function worldToScreen(view, x, y) { return { x: (x - view.x) * view.scale + view.width / 2, y: (y - view.y) * view.scale + view.height / 2 }; }
 export function zoom(view, factor, sx = view.width / 2, sy = view.height / 2) {
@@ -43,6 +43,16 @@ function structure(c, b, time) {
     c.fillStyle = '#718888'; c.fillRect(0.4, 0.2, w - 0.8, 0.4); c.fillStyle = '#273d43'; for (let i = 0; i < 4; i++) c.fillRect(0.45 + i * 0.54, 1.12, 0.32, 0.35);
     c.fillStyle = b.powered ? '#d3d9aa' : '#607b7a'; for (let i = 0; i < 4; i++) c.fillRect(0.48 + i * 0.54, 1.15, 0.26, 0.2);
     if (b.kind === 'barracks') { c.strokeStyle = '#ead3a1'; c.beginPath(); c.moveTo(2.5, 0.5); c.lineTo(2.5, -0.3); c.stroke(); polygon(c, [[2.5, -0.3], [3, -0.13], [2.5, 0.05]], '#bd785c'); }
+  } else if (b.kind === 'commons') {
+    polygon(c, [[0.2, 0.3], [1.5, 0.08], [2.8, 0.3], [2.65, 1.2], [0.35, 1.2]], '#d3bf93', '#354446');
+    c.fillStyle = '#9c805d'; c.fillRect(0.45, 1.55, 2.1, 0.5);
+    c.fillStyle = '#607971'; c.fillRect(0.45, 1.25, 2.1, 0.18); c.fillRect(0.45, 2.2, 2.1, 0.18);
+    c.fillStyle = '#d9cfaa'; for (let i = 0; i < 4; i++) { c.beginPath(); c.arc(0.7 + i * 0.5, 1.8, 0.11, 0, 7); c.fill(); }
+  } else if (b.kind === 'relay') {
+    polygon(c, [[0.2, 1.65], [0.6, 0.35], [1.4, 0.35], [1.8, 1.65]], '#899e97', '#31494a');
+    c.strokeStyle = '#d7c495'; c.lineWidth = 0.1; c.beginPath(); c.moveTo(1, 1.3); c.lineTo(1, -0.4); c.stroke();
+    c.fillStyle = '#b6d7ca'; c.beginPath(); c.ellipse(1, -0.1, 0.65, 0.18, -0.25, 0, 7); c.fill();
+    c.fillStyle = '#e0d996'; c.fillRect(0.65, 1.25, 0.7, 0.2);
   } else if (b.kind === 'farm') {
     c.fillStyle = '#918b70'; c.fillRect(0.15, 0.15, w - 0.3, h - 0.3);
     for (let row = 0; row < 3; row++) { c.fillStyle = '#344d36'; c.fillRect(0.3, 0.3 + row * 0.48, w - 0.6, 0.3); for (let i = 0; i < 8; i++) { c.fillStyle = b.growth >= 100 ? '#c4bb6b' : '#91b175'; c.beginPath(); c.ellipse(0.45 + i * 0.3, 0.44 + row * 0.48, 0.04 + b.growth / 900, 0.05 + b.growth / 1000, 0.4, 0, 7); c.fill(); } }
@@ -110,6 +120,14 @@ export function render(canvas, minimap, s, ui) {
     else { c.fillStyle = '#354f3d'; c.beginPath(); c.arc(n.x, n.y, 0.38, 0, 7); c.fill(); c.fillStyle = n.kind === 'food' ? '#bec18a' : '#97ac72'; for (let i = 0; i < 5; i++) { c.beginPath(); c.ellipse(n.x + Math.cos(i * 1.3) * 0.18, n.y + Math.sin(i * 1.3) * 0.18, 0.18, 0.11, i, 0, 7); c.fill(); } }
     if (ui.selected.includes(n.id)) { c.strokeStyle = '#e4d38c'; c.lineWidth = 0.05; c.strokeRect(n.x - 0.5, n.y - 0.5, 1, 1); }
   }
+  for (const site of s.sites) if (!site.building) {
+    c.strokeStyle = '#e1c38b'; c.lineWidth = 0.065; c.setLineDash([0.2, 0.15]); c.strokeRect(site.x, site.y, 2, 2); c.setLineDash([]);
+    if (s.explored[cell(site.x, site.y)]) {
+      c.fillStyle = '#7c8880'; c.fillRect(site.x + 0.3, site.y + 0.6, 1.4, 0.9);
+      polygon(c, [[site.x + 0.5, site.y + 0.6], [site.x + 0.8, site.y - 0.15], [site.x + 1.1, site.y + 0.6]], '#b0a789', '#344446');
+    }
+    c.fillStyle = '#e1c38b'; c.font = '0.3px Segoe UI'; c.fillText(site.name, site.x - 0.3, site.y + 2.4);
+  }
   // Physical power lines communicate layout before a player opens an inspector.
   for (const b of s.buildings.filter(b => b.complete && BUILDINGS[b.kind].demand)) {
     const source = s.buildings.find(g => g.complete && BUILDINGS[g.kind].power && Math.hypot(center(g).x - center(b).x, center(g).y - center(b).y) <= 11);
@@ -123,6 +141,8 @@ export function render(canvas, minimap, s, ui) {
   for (const p of s.people) {
     if (ui.selected.includes(p.id) && p.route.length) { c.strokeStyle = '#ece1a866'; c.lineWidth = 0.035; c.setLineDash([0.12, 0.1]); c.beginPath(); c.moveTo(p.x, p.y); for (const n of p.route) c.lineTo(n.x, n.y); c.stroke(); c.setLineDash([]); }
     unit(c, p, ui.selected.includes(p.id), s.time);
+    if (p.drafted) { c.strokeStyle = '#e3c179'; c.lineWidth = 0.06; c.strokeRect(p.x - 0.4, p.y - 0.45, 0.8, 0.85); }
+    if (p.wounded || p.job?.type === 'care') { c.fillStyle = p.wounded ? '#ef9c85' : '#bfdfbe'; c.fillRect(p.x + 0.3, p.y - 0.6, 0.12, 0.38); c.fillRect(p.x + 0.17, p.y - 0.47, 0.38, 0.12); }
   }
   for (const h of s.hostiles) if (s.explored[cell(h.x, h.y)]) unit(c, h, ui.selected.includes(h.id), s.time, true);
   for (const e of s.effects) { c.strokeStyle = e.type === 'shot' ? '#f2d49b' : '#e09678'; c.lineWidth = 0.045; c.beginPath(); c.moveTo(e.x, e.y); c.lineTo(e.tx, e.ty); c.stroke(); }
@@ -150,6 +170,7 @@ function drawMinimap(canvas, s, view) {
   for (let y = 0; y < HEIGHT; y++) for (let x = 0; x < WIDTH; x++) { const i = cell(x, y); c.fillStyle = s.explored[i] ? colors[s.terrain[i]] : '#223431'; c.fillRect(x * sx, y * sy, sx, sy); }
   for (const b of s.buildings) { c.fillStyle = b.complete ? '#e0c48a' : '#aab6a0'; c.fillRect(b.x * sx, b.y * sy, BUILDINGS[b.kind].w * sx, BUILDINGS[b.kind].h * sy); }
   for (const p of s.people) { c.fillStyle = '#e4e8d1'; c.fillRect(p.x * sx - 1, p.y * sy - 1, 2, 2); }
+  for (const site of s.sites) { c.strokeStyle = site.restored ? '#a4d1a3' : '#ebc581'; c.strokeRect(site.x * sx, site.y * sy, 2 * sx, 2 * sy); }
   for (const h of s.hostiles) { c.fillStyle = '#e98e76'; c.fillRect(h.x * sx - 1, h.y * sy - 1, 3, 3); }
   const min = screenToWorld(view, 0, 0), max = screenToWorld(view, view.width, view.height); c.strokeStyle = '#e9d39b'; c.lineWidth = 1; c.strokeRect(min.x * sx, min.y * sy, (max.x - min.x) * sx, (max.y - min.y) * sy);
 }

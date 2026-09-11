@@ -32,6 +32,22 @@ try {
   await page.getByRole('button', { name: 'Help', exact: true }).click();
   if (!(await page.locator('#help-dialog').isVisible())) throw new Error('Help did not open');
   await page.getByRole('button', { name: 'Return to basin' }).click();
+  await page.locator('#community').click();
+  const civicTime = await page.evaluate(() => window.frontier.snapshot().time);
+  await page.locator('[data-charter="industry"]').click();
+  await page.locator('[data-duty]').first().click();
+  await page.locator('[data-care]').first().click();
+  await page.locator('[data-home]').first().click();
+  const civic = await page.evaluate(() => window.frontier.snapshot());
+  if (civic.community.charter !== 'industry' || !civic.people[0].drafted || !civic.people[0].caregiver || !civic.people[0].home || civic.time !== civicTime) throw new Error('Community controls or modal pause failed');
+  await page.screenshot({ path: 'artifacts/community-controls.png' });
+  await page.locator('[data-duty]').first().click();
+  await page.locator('[data-charter="balanced"]').click();
+  await page.locator('[data-site-focus]').first().click();
+  if (Math.abs((await page.evaluate(() => window.frontier.view().x)) - 10) > 0.01) throw new Error('Site location failed');
+  await page.locator('#community').click();
+  await page.locator('[data-site]').first().click();
+  if (!(await page.locator('#notice').textContent()).includes('Scout')) throw new Error('Unexplored site lacks clear failure feedback');
   await page.locator('#pause').click();
   await page.locator('#fit').click();
   async function point(x, y) {
@@ -103,7 +119,7 @@ try {
   if (browserPerformance.frameMs.p95 > 50) throw new Error(`Frame pacing below 20fps target: ${JSON.stringify(browserPerformance)}`);
   if (await page.locator('#fatal').isVisible()) throw new Error('Fatal panel visible');
   if (errors.length) throw new Error(errors.join('\n'));
-  await writeFile('artifacts/smoke.json', JSON.stringify({ passed: true, checks: ['boot', 'new game', 'simulation running', 'roster selection', 'pause', 'save', 'reload', 'load', 'zoom', 'help', 'placement', 'overlap rejection', 'group selection', 'group move', 'stop', 'pan', 'midgame load', 'corrupt save rejection', 'far/normal/close', '1440x900', '1280x720'], errors }, null, 2));
+  await writeFile('artifacts/smoke.json', JSON.stringify({ passed: true, checks: ['boot', 'new game', 'simulation running', 'roster selection', 'pause', 'save', 'reload', 'load', 'zoom', 'help', 'charter', 'field duty and release', 'caregiver assignment', 'home assignment', 'community modal pause', 'site locate and rejection feedback', 'placement', 'overlap rejection', 'group selection', 'group move', 'stop', 'pan', 'midgame load', 'corrupt save rejection', 'far/normal/close', '1440x900', '1280x720'], errors }, null, 2));
   console.log('Browser smoke passed; screenshots in artifacts/.');
 } catch (error) {
   if (page) {

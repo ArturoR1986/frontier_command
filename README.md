@@ -1,8 +1,8 @@
 # Frontier Command
 
-Original real-time colony strategy in Ashwater Basin. Four named settlers build a home through visible gathering, hauling and construction. Growth raises both capability and Exposure.
+Original real-time colony strategy in Ashwater Basin. Four named settlers build a home through visible gathering, hauling and construction. Organize homes, work, care and field duty, then restore three basin installations. Growth raises both capability and Exposure.
 
-Creator: Arturo Ruiz Albarrán. Implementation owner: Codex. Mission: [Issue #1](https://github.com/ArturoR1986/frontier_command/issues/1). See [QA status](docs/QA_REPORT.md) before treating a development milestone as a release.
+Creator: Arturo Ruiz Albarrán. Implementation owner: Codex. Mission: [Issue #1](https://github.com/ArturoR1986/frontier_command/issues/1). See [production status](docs/PRODUCTION_STATUS.md) before treating a development milestone as a release.
 
 ## Run
 
@@ -35,7 +35,7 @@ There are no remote assets, CDN fonts, telemetry, accounts or API keys. The loca
 - WASD/arrows or middle/Shift-drag pan. Wheel/+/- zoom. F or Colony centers the camera. Click the minimap to navigate.
 - Space pauses; the speed button cycles 1×, 2×, 4×. Menus pause automatically.
 - Build a Workshop for tools, defense or medicine. Barracks train selected settlers. Invite people when housing and food allow it.
-- The first 20 simulated minutes are safe. Afterward, sufficient Exposure creates a directional warning. Rally Kei, power defenses, and repair afterward.
+- Automatic raids wait 20 simulated minutes. You can start disclosed site expeditions earlier. Afterward, sufficient Exposure creates a directional warning. Rally Kei, power defenses, and repair afterward.
 
 Use **Help** for the full in-game reference, audio volume and guidance settings. [Controls and mechanics](docs/CONTROLS.md) explain the details.
 
@@ -43,7 +43,7 @@ Use **Help** for the full in-game reference, audio volume and guidance settings.
 
 Save writes a manual browser-local slot; a separate autosave runs every two simulated minutes. Load prefers manual and falls back to autosave only when no manual slot exists. Menu → Export save creates a portable JSON file; Import save restores one. Starting a new landing first autosaves the existing colony.
 
-Format 1 retains the map, people, needs, cargo, jobs, deliveries, stocks, research, threats and settings. Paths recalculate safely. Invalid/unsupported saves are rejected before replacing the colony. Browser data belongs to the origin/profile and is lost if site storage is cleared; export to transfer or back up.
+Format 2 retains the map, people, needs, cargo, jobs, deliveries, stocks, research, threats and settings. Civic assignments, wounds, suspended work and restored sites persist. Format 1 migrates to civic defaults and adds accessible restoration sites without deleting existing buildings or resource nodes; local landmark terrain is cleared. Paths recalculate safely. Invalid/unsupported saves are rejected before replacing the colony. Browser data belongs to the origin/profile and is lost if site storage is cleared; export to transfer or back up.
 
 ## Verify
 
@@ -60,6 +60,7 @@ For browser automation only:
 npm install --no-save playwright@1.58.2
 npx playwright install chromium
 node scripts/smoke.mjs
+node scripts/community-playtest.mjs
 ```
 
 Run tests and profile before smoke: they produce save fixtures in `artifacts/`. The smoke suite uses real interface clicks for placement, commands, pause, save/reload, camera and help. `node scripts/opening-playtest.mjs` plays 20 simulated minutes in a real browser at the normal 4× speed; allow about five minutes.

@@ -53,7 +53,7 @@ test('power priorities, range and restoration are predictable', () => {
 });
 test('save/load preserves in-transit materials and rejects corrupt/unsupported saves', () => {
   const s = newGame(); place(s, 'habitat', 24, 20); run(s, 12); const saved = serialize(s), copy = deserialize(saved); assert.deepEqual(stocks(s), stocks(copy)); assert.deepEqual(s.people.map(p => p.cargo), copy.people.map(p => p.cargo)); run(copy, 240); assert.ok(copy.buildings.find(b => b.kind === 'habitat').complete);
-  assert.throws(() => deserialize('{')); assert.throws(() => deserialize(saved.replace('"version":1', '"version":99')));
+  assert.throws(() => deserialize('{')); assert.throws(() => deserialize(saved.replace('"version":2', '"version":99')));
   const corrupt = JSON.parse(saved); corrupt.state.people[0].hunger = 'bad'; assert.throws(() => deserialize(JSON.stringify(corrupt)));
 });
 test('direct movement overrides work and stop safely resumes autonomy', () => {
