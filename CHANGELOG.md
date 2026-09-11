@@ -1,72 +1,41 @@
 # Frontier Command — Changelog
 
-## 1.0.0 — 2026-09-11 — Ashwater Basin
+## 2026-09-11 — Guidance revision 0.2: learning transfer, not continuation
 
-- Completed the integrated colony sandbox, progression, threat and recovery loops.
-- Added portable playable packaging, local run/build instructions, controls, architecture and rights documentation.
-- Hardened save validation and retained camera preferences; invalid saves cannot replace the current colony.
-- Added Command Hub reconstruction from salvaged inventory, group movement spacing and idle-person separation.
-- Cached terrain rendering after measured frame-pacing failures; retained dynamic units, structures and work feedback.
-- Verified the real-browser 20-minute opening and deterministic 60-minute gameplay/recovery sessions.
-- Added final QA evidence and release notes. See the QA report for exact release checks and CI revision.
-
-## 0.6.0 — 2026-09-11 — Integrated production development milestone
-
-- Added modular deterministic simulation, terrain routing and physical storage/cargo.
-- Added colonist needs, priorities, direct commands, construction, food, power, research and recruitment.
-- Added exposure warnings, bounded first contact, tactical combat, salvage and recovery.
-- Added Canvas world rendering, camera, group selection, placement previews, onboarding, help and procedural audio.
-- Added versioned save/load, portable import/export and corrupt-save rejection.
-- Added simulation regressions, structured hour-long playthrough, browser smoke tests, stress profiling and CI.
-- Fixed depot-origin pathing, automatic stockpile escalation and UI refresh interrupting clicks during validation.
-- This milestone remains under release validation; it is not yet the completed v1.0 release.
-
-## 2026-09-11 — Codex Handoff / Production Reset
-
-### Added
-
-- `AGENTS.md` — Codex operating contract and autonomy rules.
-- `docs/PROJECT_HANDOFF.md` — complete project history, design intent, creator feedback, and prototype lessons.
-- `docs/V1_COMPLETION_CRITERIA.md` — final product release gate.
-- `docs/DECISIONS.md` — durable decision log.
-- `README.md` — repository entry point.
+This is a documentation/mission correction, not a new playable game release.
 
 ### Changed
 
-- Project ownership moved from conversational prototyping to Codex-led production implementation.
-- Product target explicitly changed from iterative prototype to complete tested v1.0.
-- Human involvement reduced to genuine direction, specific gameplay references, external-action blockers, or irreversible choices.
+- Replaced 'finish the current prototype' with research-led original game production.
+- Reclassified v0.1–v0.5 and the recovery experiment as lessons and failure evidence, not a required codebase or final design.
+- Reclassified the old map, people, resources, buildings, engine, projection and Exposure formula as provisional ideas.
+- Corrected the inaccurate claim that recovery source was already preserved in `archive/`.
+- Aligned AGENTS, starting instructions, project brief, decision log, release criteria and repository README with the creator's clarification.
+- Retained broad implementation autonomy, rare focused human intervention, finite release scope, continuity and truthful validation.
 
-### Historical prototype summary
+### Added
 
-#### v0.1
+- `docs/TRIAL_LESSONS.md`: creator observations, historical claims, evidence limits and transferable failure classes.
+- `docs/REFERENCE_STUDY_AND_SYNTHESIS.md`: focused study of both references, observation records, conflict resolution, original visual/function design and tests for coupled systems.
 
-- Browser prototype with four colonists, resources, building, needs, Rangers, and simple raids.
-- Visuals were primarily debug primitives.
+### Verification scope
 
-#### v0.2
+Review the complete changed documentation set for contradictory continuation instructions and broken internal references. Verify the GitHub commit and mission update. This change does not certify any prototype, execute a Codex task or establish that a running Codex session consumed the new instructions.
 
-- Established Ashwater Basin visual direction.
-- Added stronger unit/building silhouettes and environment grammar.
-- Terrain still lacked real mechanical blocking.
+## 2026-09-11 — Initial Codex handoff (superseded framing)
 
-#### v0.3
+Created the initial operating contract, start document, project history, completion criteria, decision log, archive notes and Issue #1. Its design direction was more prescriptive and its wording too anchored to finishing the prototypes. Guidance revision 0.2 corrects that interpretation.
 
-- Added camera zoom/pan and clearer task/status feedback.
-- Fixed a multi-tile construction completion-distance bug.
-- Delayed/reduced first hostile encounter after playtest feedback.
+## Historical trials — descriptions are not release verification
 
-#### v0.4 design direction
+- v0.1: very basic interactive exploration of the proposed hybrid.
+- v0.2: visual differentiation attempt; creator reported hard-to-inspect map, unclear work, stalled Habitat construction and premature combat pressure.
+- v0.3: assistant-reported usability/construction/pacing repairs; supplied gameplay recordings were not successfully reviewed in the earlier runtime.
+- v0.4–v0.5: expanded theory and implementation experiments; creator's staged v0.5 launch showed an empty gameplay shell.
+- v0.5.1: reduced recovery file and historical syntax pass, not a verified finished hybrid game.
 
-- Locked the principle that work should be understandable by watching the world.
-- Prioritized physical logistics, staged construction, meaningful terrain, quiet-life simulation, day/night, and telegraphed threats.
+See `docs/TRIAL_LESSONS.md` for evidence distinctions and implications.
 
-#### v0.5 / v0.5.1 experiments
+## Implementation reconciliation — 2026-09-11
 
-- Explored physical hauling, work autonomy, power, Exposure, Sensor/Workshop/Barracks functions, minimap, warnings, and richer terrain.
-- v0.5 suffered a startup initialization failure that produced a blank gameplay shell.
-- v0.5.1 recovery build simplified startup and added visible fatal-error handling.
-
-### Testing lesson
-
-A build is not considered delivered merely because source exists or syntax passes. It must launch, run, and survive structured gameplay testing.
+An independently written modular browser game and tests exist on codex/issue-1-v1. They were built against the earlier handoff before revision 0.2 was fetched. Those changes are preserved as tested implementation evidence, not automatically accepted as the corrected final design. The previous QA_REPORT.md documents the superseded checklist. FINAL_QA_REPORT.md will assess the corrected outcome-based gate after reference study, synthesis and necessary implementation changes.
