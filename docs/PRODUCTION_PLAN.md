@@ -1,22 +1,27 @@
 # Production plan — persistent colony conquest
 
-Guidance 0.3, 2026-09-11. All new milestones are **unpassed**. The old restoration package is a technical prototype. This plan addresses the creator's request to study and define the next step; planning does not complete the game mission.
+Guidance 0.4, 2026-09-11. All new milestones are **unpassed**. The old restoration package is a technical prototype. Latest creator direction adds substantial home-map play, world travel improved by technology, slowly developed civilian operators, valuable crewed vehicles and manufactured robots. Planning does not complete the game mission.
 
 ## P1 — Prove why the colony grows
 
-Build a reproducible nine-region fixture with two economically active colonies and a contested resource outpost. Regions support building and cross-region travel, not decorative screens. Introduce ownership and faction-scoped stocks before opponent production. Establish an authoritative command boundary from the start and connect two independent browser clients within P1, following the [developer/player review](DEVELOPER_AND_PLAYER_REVIEW.md). Reuse safe jobs, care and cargo. Replace restoration as the main purpose with supplied expansion and territorial control; show objective, benefit, bottleneck and next action.
+Build a reproducible nine-region world fixture with two economically active colonies, substantial detailed home maps and a contested destination. Prove local exploration, resource claiming and terrain-shaped base development before requiring a world expedition. Establish an authoritative command boundary from the start and connect two independent browser clients within P1. Reuse safe jobs, care and cargo. Show objective, benefit, bottleneck and next action without making the home map a forced short tutorial.
+
+P1 must also prove the new force model: one crewed transport, one crewed combat vehicle, and basic/advanced robot examples with different fabrication costs and tactical roles. These are internal representative classes, not a locked final roster. Demonstrate boarding, operation, disembarking, repair and a crew-recovery case. Existing generic settler mobilization alone no longer establishes the intended combat experience.
 
 Acceptance:
 
-- Both colonies gather, construct, equip/recruit and suffer economic interruption under the same rules. No free scheduled armies as the rival economy.
-- Starting territory cannot provide every advanced capability. The outpost changes measured income or production options. Home investment and early expansion are both playable.
+- Both colonies gather, construct, train operators, fabricate robots and build vehicles under the same rules. No free scheduled armies as the rival economy.
+- Local terrain/resources support more than one viable base layout and substantial growth. Mountains affect access and defense. The wider-world destination adds a useful capability, resource advantage or interaction without making basic home development depend on immediate departure.
+- Compare travel to the same destination on foot and with transport. Route length, terrain and vehicle capability change the displayed arrival estimate and measured journey. Cargo and crew occupy exactly one place; transitions and interruptions preserve them.
+- Persistent practice/training improves a civilian skill that changes a disclosed operating capability. Assigning that person to a vehicle changes home staffing. Robot replacement consumes the appropriate inputs/time; a higher tier is not simply a free stronger unit.
+- Boarding/disembarking and disabled-vehicle recovery preserve crew identity, earned skills and cargo. Vehicle hull loss and crew injury are separate states governed by disclosed prototype rules.
 - Supply physically reaches the outpost. Blockade depletes reserves before readiness changes; recovery conserves cargo.
 - Battle and occupation change ownership and productive output. Defeat permits retreat, treatment and rebuilding. Mobilization visibly costs domestic labor.
 - Save/restart preserves both colonies, ownership, routes and unfinished work. Region crossings neither duplicate nor lose people/goods.
 - Two independent clients act for separate factions in the same server-owned world. Reject commands against unowned assets. One client's menu/disconnect does not pause the other. Basic reconnect returns to the same colony; P2 supplies systematic durability and failure testing.
-- A reviewed 30–45 minute session covers preparation, expansion, conflict and aftermath. A fresh-player review checks five-minute goal comprehension and next-action clarity; scripted tests cannot establish this. Label developer judgment separately.
+- Review a home-development session and a separate expedition/combat/aftermath session. Accelerated fixtures may compress travel and training to test correctness, but label that acceleration; they cannot establish normal pacing. The former 30–45 minute full-loop example is not a requirement to rush the player into war. Fresh-player review checks five-minute goal comprehension and next-action clarity; scripted tests cannot establish this.
 
-This internal proof does not redefine v1. **First implementation action:** authoritative command and faction/region state contracts, then a deterministic two-colony economy fixture and the playable expansion loop. The review proposes an initial comprehension screen with five first-time participants and at least four independently identifying the objective and next choice. This is an unexecuted usability threshold, not statistical validation; unavailable human evidence remains unverified.
+This internal proof does not redefine v1. **First implementation action:** define authoritative ownership/location, terrain/travel and person/robot/vehicle/crew contracts, then create reproducible home-map, two-colony economy and crewed-journey fixtures. Compare 128, 256 and 512-tile map widths with meaningful terrain and active entities to choose a home-map target before broad content; these are engineering candidates, not approved final dimensions. The review proposes an initial comprehension screen with five first-time participants and at least four independently identifying the objective and next choice. This is an unexecuted usability threshold, not statistical validation; unavailable human evidence remains unverified.
 
 ## P2 — Prove persistence with real clients
 
@@ -26,7 +31,7 @@ Acceptance: unauthorized commands fail; retries cannot double-spend; reconnect r
 
 ## P3 — Conquest and recovery
 
-Implement declared sieges, defense windows, garrisons, occupation/integration, surrender/evacuation and recoverable defeat. Add production choices, scouting and counters rather than only more hit points. Test a stronger colony taking useful weaker-colony territory, a failed overextended invasion, and offline rules across timezones. The winner gains control; the loser understands their continuing role.
+Prototype offline attack rules through play rather than treating the prior siege schedule as settled. Compare disclosed notice/window candidates with standing defenses and absent owners; choose and document a rule set after evidence. Implement garrisons, occupation/integration and tested defeat/recovery options. Include valuable operators and vehicles alongside more replaceable robots, with scouting, terrain and counters. Test a stronger colony taking useful weaker-colony territory, a failed overextended invasion and offline cases across timezones. The winner gains control; the loser understands their continuing role. Final offline policy does not block P1, but must be disclosed and verified before release.
 
 ## P4 — Connected realms and diplomacy
 
@@ -36,7 +41,7 @@ Run two persistent realms with at least two player colonies each. Connections su
 
 Complete onboarding, original visual states, audio/settings, administrative recovery, account/session handling, backups, abuse controls and packaged client/server startup. Development requires no paid service. Select an authorized accessible delivery environment before final release.
 
-Initial engineering load target, not implemented capacity: two realms of at least nine expandable regions each; four connected player clients total; 100 persistent people per colony; 1,000 structures world-wide; two simultaneous engagements. On reported hardware, target server tick p95 below 50 ms at 10 Hz and client frame p95 below 33 ms at 1280×720 with action visible. Measure active/inactive regions, navigation churn, retained memory and transfer traffic. Profile failures require optimization or an explicit blocker, not a return to the 16-person completion scope.
+Initial engineering load target, not implemented capacity: two realms of at least nine expandable regions each; four connected player clients total; 100 persistent people, 40 robots and eight vehicles per colony; 1,000 structures world-wide; two simultaneous engagements. These are benchmark populations, not unit caps or a required army composition. Select and record substantial home-map dimensions from P1 profiling. On reported hardware, target server tick p95 below 50 ms at 10 Hz and client frame p95 below 33 ms at 1280×720 with action visible. Measure active/inactive regions, crewed navigation, travel parties, retained memory and transfer traffic. Profile failures require optimization or an explicit blocker, not a return to the 16-person completion scope.
 
 Run a 24-hour persistent-world soak with restart/disconnected-player cases, plus reviewed real-time opening, ordinary development, war, recovery, diplomacy and cross-realm sessions. Verify victory without resetting the world. Preserve useful regressions; update obsolete restoration expectations honestly. Qualify the actual package. Automated success and player comprehension are separate gates.
 

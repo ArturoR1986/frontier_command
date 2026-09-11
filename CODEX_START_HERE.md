@@ -1,16 +1,18 @@
 # Codex — Start here: learn, synthesize, create
 
-Guidance revision: 0.3 | Updated: 2026-09-11
+Guidance revision: 0.4 | Updated: 2026-09-11
 Repository: `ArturoR1986/frontier_command` | Branch for this guidance: `main`
 Mission: https://github.com/ArturoR1986/frontier_command/issues/1
 
 ## Current direction and next action
 
+Latest creator refinement: substantial local home-map play shaped by mountains, resources and terrain; a much larger world map with tribes/players and meaningful travel distances; mobility improved by technology and vehicles; long-developed civilian specialists operating valuable vehicles; manufactured robots at varied costs as the more replaceable military force. Offline attacks remain possible, with detailed rules to be worked out in play. Earlier siege timings and the rushed first-hour expedition example are not fixed requirements.
+
 The creator rejected the earlier restoration sandbox as completion: purpose is unclear, the map is too small, and growth does not lead to conquest. References are **RimWorld and classic StarCraft**, not Factorio. The creator explicitly chose **persistent worlds with lasting colonies**. Strong colonies must take territory, grow into a wider world, and cooperate or fight with powerful colonies from other realms.
 
 Issue #1 remains open. The latest requested stage was an extensive creator/developer and player-feedback review before the next build. That review is now recorded in `docs/DEVELOPER_AND_PLAYER_REVIEW.md`, with a PDF in `output/pdf/` and a source inventory in `docs/research/developer-review-sources.json`. Read it alongside `docs/GAMEPLAY_RESEARCH_2026_09_11.md`, `docs/GAME_DESIGN.md`, `docs/PRODUCTION_PLAN.md` and `docs/PRODUCTION_STATUS.md`.
 
-The former v1 package/QA are historical technical evidence, not acceptance of the requested game. Next implementation: begin P1 with authoritative command and faction/region contracts and a two-colony economy fixture. Include two independent clients in P1; P2 hardens persistence and failure recovery. Continue through conquest and connected realms. A research pass or internal slice does not complete this mission. This review checkpoint contains no new gameplay implementation.
+The former v1 package/QA are historical technical evidence, not acceptance of the requested game. Next implementation: begin P1 with authoritative ownership/location, terrain/travel and person/robot/vehicle/crew contracts, then home-map, economy and crewed-journey fixtures. Include two independent clients in P1; P2 hardens persistence and failure recovery. Continue through conquest and connected realms. A research pass or internal slice does not complete this mission. This design checkpoint contains no new gameplay implementation.
 
 ## Important correction from the creator
 

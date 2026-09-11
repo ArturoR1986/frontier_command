@@ -1,12 +1,14 @@
 # Frontier Command — Learning transfer and original-game brief
 
-Guidance revision: 0.3 | Updated: 2026-09-11
+Guidance revision: 0.4 | Updated: 2026-09-11
 Creator: Arturo Ruiz Albarrán | Prepared with ChatGPT
 Status: corrected production intent; not a specification to finish v0.5
 
 Latest creator direction supersedes the former finite restoration scope: **RimWorld + classic StarCraft; persistent worlds with lasting colonies; territorial growth and conquest; cooperation or war across connected realms.** The earlier completion claim was rejected and Issue #1 is reopened. Read GAMEPLAY_RESEARCH_2026_09_11.md, GAME_DESIGN.md, PRODUCTION_PLAN.md and PRODUCTION_STATUS.md for current evidence, design experiments and the next action. Historical prototype QA is not current product acceptance.
 
 ## 1. The central correction
+
+**Latest creator clarification:** local home maps must support substantial exploration and development, with mountains/environment shaping resources and base strategy. A much larger world map adds tribes and players, plausible travel distances, and technology/vehicles that improve mobility. Civilians develop skills over a long time and have hero-like value; they operate valuable vehicles such as original walkers, tanks or ships. Fabricated robots form the more replaceable military force, with costs that vary by technology. StarCraft informs tactical battle feel, not rapid replacement of people and major equipment. Detailed offline-attack rules are deliberately open to playtesting. These requirements supersede incompatible earlier examples; see GAME_DESIGN.md revision 0.4.
 
 The subsequent research request is complete in [DEVELOPER_AND_PLAYER_REVIEW.md](DEVELOPER_AND_PLAYER_REVIEW.md): creators' journals and retrospectives, setbacks, lessons, player praise/criticism, and implications for the persistent-world design. The [PDF](../output/pdf/rimworld-starcraft-development-review.pdf) is the readable companion. This stage changes research and planning only. The revised next implementation introduces shared authority and two clients within P1, then hardens durability in P2; all product milestones remain unpassed.
 

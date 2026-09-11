@@ -1,9 +1,11 @@
 # AGENTS.md — Research-led original game production
 
-Guidance revision: 0.3 | Updated: 2026-09-11
+Guidance revision: 0.4 | Updated: 2026-09-11
 Project: Frontier Command (working title) | Creator: Arturo Ruiz Albarrán
 
 ## Mission and intention
+
+Latest refinement: give the player a large, terrain-rich home map with substantial local exploration, resource claiming and base development, then a much larger world map with tribes and human colonies. Distance and travel matter; technology and vehicles improve mobility. Civilians are durable, slowly trained, hero-like specialists who operate valuable vehicles. Manufactured robots provide more replaceable combat forces at varied technology costs. Transfer StarCraft's tactical fighting, not its rapid replacement economy. Offline attacks are possible; their detailed rules will be developed through play, not assumed settled by the earlier siege-window proposal. Read revision 0.4 of GAME_DESIGN.md and PRODUCTION_PLAN.md.
 
 Latest creator direction supersedes the former restoration scope: combine **RimWorld and classic StarCraft** (not Factorio); build **persistent worlds with lasting colonies**, meaningful growth, stronger colonies conquering weaker ones, and connected realms where developed players cooperate or fight. The creator rejected the earlier v1.0 completion claim because purpose and growth were insufficient. Issue #1 is open. Read `docs/GAMEPLAY_RESEARCH_2026_09_11.md`, the revised design/plan and current status. Do not use the old small-map checklist to close the mission.
 

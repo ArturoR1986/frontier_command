@@ -1,21 +1,25 @@
 # v1.0 completion — the chosen original game, not repaired v0.5
 
-Guidance revision: 0.3 | Updated: 2026-09-11
+Guidance revision: 0.4 | Updated: 2026-09-11
 Status: outcome-based release gate; Codex must instantiate design-specific tests in its production plan.
 
 ## Current mandatory product outcomes
 
-The creator rejected the former restoration scope as completion. **None of the new product gates below has passed.** Historical revision 0.2 QA does not establish revision 0.3 acceptance.
+The creator rejected the former restoration scope as completion. **None of the new product gates below has passed.** Historical revision 0.2 QA does not establish revision 0.4 acceptance.
 
 - Readable purpose links colony wellbeing/production to territorial expansion and military capability. Reviewed new-player evidence establishes five-minute goal comprehension and a meaningful next choice; automated clicks cannot prove this.
 - Colonies/ownership persist across sessions and authoritative server restarts. Independent human clients share the world; one client's pause/disconnect cannot pause everyone. Ownership checks and retries cannot duplicate resources/orders.
 - Geographic/population growth extends beyond the former basin/16-person cap. Distinct regions provide strategic resources, routes and competing interests. Measure PRODUCTION_PLAN.md scale/performance targets on reported hardware.
+- The large home map supports substantial local exploration, resource claiming and multiple viable base layouts. Mountains/environment change access, collection and defense. A much larger world map supports actual travel and interaction with tribes and human colonies; it is not only a collection of decorative screens.
+- Distance, terrain and transport capability affect journeys with understandable estimates and actual travel state. Technology/vehicles improve mobility or carrying capacity. Validate foot/vehicle comparisons and persistence across journey interruption, map transition and restart.
+- Civilian skills develop persistently and materially affect a vehicle-operating role. People can board, operate and leave valuable vehicles without losing identity or duplicating presence. Vehicle damage, crew injury and recovery are separately modeled under disclosed rules. Ordinary civilian replacement is not a rapid expendable-unit queue.
+- Manufactured robots provide comparatively replaceable combat strength across different costs and tactical roles. Fabrication, vehicle investment/repair and civilian training all consume real resources or time. Reviewed battles show responsive commands, readable terrain/positioning decisions and a meaningful reason to preserve experienced crews and major equipment.
 - Opponent colonies have productive economies. Stronger colonies can conquer useful territory and cores; occupation, supply and recovery have consequences. Defeated players have documented continuing options; offline siege rules work as disclosed.
 - At least two persistent realms, each with at least two player colonies, connect for actual travel/trade and cooperation or war. Crash/retry/reconnect tests prove exactly one owner of transferred people/cargo. AI rehearsal or an unlock flag cannot satisfy human cross-realm play.
 - Domain victory is achieved through control and remains recorded while colony/world persist. Restoration is not conquest victory. Diplomacy and outward progression follow GAME_DESIGN.md.
 - The production plan, including long-lived server reliability, reviewed gameplay, original presentation and distributable client/server experience, is verified. Research and internal slices cannot close Issue #1.
 
-The general quality gates below remain mandatory. Chosen scope, pause and saving must follow this persistent-world direction, not exclude it. Exact balance numbers in the design are experiments, not creator-mandated rules.
+The general quality gates below remain mandatory. Chosen scope, pause and saving must follow this persistent-world direction, not exclude it. Offline attacks are possible, but detailed schedules/protection/recovery policies remain open to playtesting; release requires a disclosed and verified chosen policy, not the earlier candidate timers. Exact balance numbers in the design are experiments, not creator-mandated rules.
 
 ## 1. Scope and design gate
 

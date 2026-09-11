@@ -2,6 +2,8 @@
 
 Original colony strategy in development, informed by RimWorld and classic StarCraft. The target is lasting colonies that grow, conquer territory and encounter other players across connected persistent realms, with cooperation or war.
 
+The current design calls for a large home map shaped by terrain, a wider world where travel technology matters, skilled civilians operating valuable vehicles, and manufactured robots as the more replaceable military force. These are required design targets, not features of the current prototype. Offline attack rules remain open to playtesting. See the [updated design](docs/GAME_DESIGN.md).
+
 Creator: Arturo Ruiz Albarrán. Implementation owner: Codex. Mission: [Issue #1 — open](https://github.com/ArturoR1986/frontier_command/issues/1). The playable build is an earlier small restoration prototype; it does not implement multiplayer, conquest or connected realms. Its technical checks passed, but the creator rejected it as the completed game. See [current status](docs/PRODUCTION_STATUS.md), [gameplay research](docs/GAMEPLAY_RESEARCH_2026_09_11.md) and [next-stage plan](docs/PRODUCTION_PLAN.md). [Historical QA](docs/FINAL_QA_REPORT.md) preserves the tested package and evidence.
 
 The extensive [developer and player review](docs/DEVELOPER_AND_PLAYER_REVIEW.md) examines development journals, setbacks, lessons and contrasting feedback from both references. A [readable PDF](output/pdf/rimworld-starcraft-development-review.pdf) and [source inventory](docs/research/developer-review-sources.json) accompany it. The next gameplay proof now includes shared authority and two clients; the review itself does not implement those systems.

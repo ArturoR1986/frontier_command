@@ -1,6 +1,18 @@
 # Decision log — intent, hypotheses and chosen design
 
-Guidance revision: 0.3 | Updated: 2026-09-11
+Guidance revision: 0.4 | Updated: 2026-09-11
+
+## 2026-09-11 — Large home map, world travel, skilled crews and robots
+
+**Status: adopted creator direction.** The home map must itself be large and engaging: explore, claim resources and choose layouts affected by mountains and the environment. A second, much larger world map includes other tribes and human colonies. Travel distance matters and transport technology improves mobility. The home remains relevant after world interaction begins; an early compulsory expedition is not the intended pacing.
+
+Civilians are long-developed, hero-like individuals whose skills make them costly to lose. They operate valuable vehicles; walkers, tanks and ships are illustrative classes, with original names/assets. Robots are fabricated in colony production facilities and are comparatively replaceable, with a range of costs depending on technology. StarCraft's tactical fighting remains an influence; its rapid unit replacement is not the target economy.
+
+**Open by explicit creator choice:** players can be attacked while absent, but detailed online/offline interaction rules will be worked out through play. The previous 24-hour notice, two-hour window and exact scheduled-battle suggestion remain candidates only. Do not present them as approved policy or block initial gameplay on their final selection.
+
+**Implementation implications, unverified:** persist distinct people, skills, robot units, vehicle hulls, crew assignments and travelling parties. Test a substantial home map plus a journey where transport changes actual time/capacity/access, and a battle with both a skilled vehicle operator and fabricated robots. Initial representative classes and benchmark counts in PRODUCTION_PLAN.md are engineering choices, not creator-mandated rosters or limits. Crew survival, fuel/energy rules, technology prices, travel clock scale and final map dimensions remain hypotheses.
+
+The 13-page developer/player review is retained as a dated research artifact. This later direction supersedes its incompatible pacing and unit-model recommendations; it does not retroactively change the evidence reviewed. No new gameplay capability is claimed by this documentation revision.
 
 ## 2026-09-11 — Persistent conquest supersedes restoration completion
 
