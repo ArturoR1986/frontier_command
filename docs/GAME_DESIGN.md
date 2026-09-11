@@ -1,6 +1,19 @@
 # Frontier Command — lasting colonies, contested worlds
 
-Guidance 0.3, 2026-09-11. **Design target, not implemented behavior.** Supersedes the small restoration-community scope. Evidence: [gameplay study](GAMEPLAY_RESEARCH_2026_09_11.md).
+Guidance 0.3, 2026-09-11. **Design target, not implemented behavior.** Supersedes the small restoration-community scope. Evidence: [gameplay study](GAMEPLAY_RESEARCH_2026_09_11.md) and [developer/player review](DEVELOPER_AND_PLAYER_REVIEW.md).
+
+## Decisions from the developer/player review
+
+The documentary review supports testing a society that produces military power and wars that change the society. These remain design hypotheses, not proven player responses:
+
+- Put shared authority and two independent clients inside the first integrated gameplay proof. P2 hardens that foundation.
+- Prioritize dependable commands, readable causes and a concrete strategic opportunity before broad content. Test navigation separately from combat balance.
+- Let larger territory introduce routes, commitments, delegation and diplomacy. Population growth must not merely multiply household maintenance.
+- Make opponent capabilities economically earned. Do not silently create stronger rival armies solely because the player accumulated wealth.
+- Use squad and production controls to preserve strategic choices while reducing repetition; do not inherit classic selection limits as a requirement.
+- Integrate new systems into ordinary colony and military decisions. Preserve visible individual consequences as forces grow.
+
+Offline windows, recovery, unequal entry and realm victory remain experiments. Neither reference validates the proposed timer values. See review sections 9-11 for tradeoffs, rejection conditions and human-evidence requirements.
 
 ## Confirmed direction and purpose
 

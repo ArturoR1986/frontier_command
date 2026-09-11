@@ -8,6 +8,8 @@ Latest creator direction supersedes the former finite restoration scope: **RimWo
 
 ## 1. The central correction
 
+The subsequent research request is complete in [DEVELOPER_AND_PLAYER_REVIEW.md](DEVELOPER_AND_PLAYER_REVIEW.md): creators' journals and retrospectives, setbacks, lessons, player praise/criticism, and implications for the persistent-world design. The [PDF](../output/pdf/rimworld-starcraft-development-review.pdf) is the readable companion. This stage changes research and planning only. The revised next implementation introduces shared authority and two clients within P1, then hardens durability in P2; all product milestones remain unpassed.
+
 The creator explicitly clarified that the early trials were a learning curve. The game remained extremely basic and non-functional in important ways; the implementation did not represent what he was trying to create. Transfer the information gathered from those attempts to Codex as guidance for studying the reference games, selecting principles and implementing a new original experience.
 
 **Continuity of learning is required. Continuity of implementation is not.**

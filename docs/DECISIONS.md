@@ -4,6 +4,10 @@ Guidance revision: 0.3 | Updated: 2026-09-11
 
 ## 2026-09-11 — Persistent conquest supersedes restoration completion
 
+**Subsequent research checkpoint:** the creator requested an extensive review before the next build, and clarified that "Richter" meant creators/developers generally. [DEVELOPER_AND_PLAYER_REVIEW.md](DEVELOPER_AND_PLAYER_REVIEW.md) records 27 documentary sources, 14 named player-review records, four discussion sources, contrary evidence and sampling limits. No new gameplay was implemented in that stage.
+
+**Chosen sequencing change, unverified in code:** bring authoritative commands and two independent clients into P1; use P2 for systematic durability and failure recovery. Reason: shared-world control and return flows shape the core experience and must be tested before broad content. Reject silent wealth-triggered rival power and inherited interface restrictions as default design rules. Retain economically earned opponents, human consequences and regional supply. The detailed siege/recovery/realm rules remain hypotheses, with explicit experiments in review sections 10-11.
+
 **Adopted user direction:** the creator rejected the game as far from done: purpose is unclear, space/growth inadequate, and progress should lead to stronger colonies conquering weaker ones and meeting developed players from connected realms, with cooperation or war. References were explicitly corrected to RimWorld and classic StarCraft, not Factorio. The persistence answer was **persistent worlds with lasting colonies**.
 
 The earlier civic expedition selection below is historical implementation, not current acceptance. Issue #1 is reopened. Technical QA and useful code remain; the completion claim is withdrawn. Current evidence is in GAMEPLAY_RESEARCH_2026_09_11.md. PRODUCTION_PLAN.md defines P1–P5; no new gate has passed.

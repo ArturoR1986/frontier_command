@@ -8,7 +8,9 @@ Mission: https://github.com/ArturoR1986/frontier_command/issues/1
 
 The creator rejected the earlier restoration sandbox as completion: purpose is unclear, the map is too small, and growth does not lead to conquest. References are **RimWorld and classic StarCraft**, not Factorio. The creator explicitly chose **persistent worlds with lasting colonies**. Strong colonies must take territory, grow into a wider world, and cooperate or fight with powerful colonies from other realms.
 
-Issue #1 remains open. Read `docs/GAMEPLAY_RESEARCH_2026_09_11.md`, `docs/GAME_DESIGN.md`, `docs/PRODUCTION_PLAN.md` and `docs/PRODUCTION_STATUS.md`. The former v1 package/QA are historical technical evidence, not acceptance of the requested game. Begin P1 with faction/region contracts and a two-colony economy fixture; continue through shared persistence, conquest and connected realms. A research pass or internal slice does not complete this mission.
+Issue #1 remains open. The latest requested stage was an extensive creator/developer and player-feedback review before the next build. That review is now recorded in `docs/DEVELOPER_AND_PLAYER_REVIEW.md`, with a PDF in `output/pdf/` and a source inventory in `docs/research/developer-review-sources.json`. Read it alongside `docs/GAMEPLAY_RESEARCH_2026_09_11.md`, `docs/GAME_DESIGN.md`, `docs/PRODUCTION_PLAN.md` and `docs/PRODUCTION_STATUS.md`.
+
+The former v1 package/QA are historical technical evidence, not acceptance of the requested game. Next implementation: begin P1 with authoritative command and faction/region contracts and a two-colony economy fixture. Include two independent clients in P1; P2 hardens persistence and failure recovery. Continue through conquest and connected realms. A research pass or internal slice does not complete this mission. This review checkpoint contains no new gameplay implementation.
 
 ## Important correction from the creator
 

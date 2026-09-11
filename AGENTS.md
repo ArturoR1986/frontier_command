@@ -7,6 +7,8 @@ Project: Frontier Command (working title) | Creator: Arturo Ruiz Albarrán
 
 Latest creator direction supersedes the former restoration scope: combine **RimWorld and classic StarCraft** (not Factorio); build **persistent worlds with lasting colonies**, meaningful growth, stronger colonies conquering weaker ones, and connected realms where developed players cooperate or fight. The creator rejected the earlier v1.0 completion claim because purpose and growth were insufficient. Issue #1 is open. Read `docs/GAMEPLAY_RESEARCH_2026_09_11.md`, the revised design/plan and current status. Do not use the old small-map checklist to close the mission.
 
+The creator subsequently requested an extensive review of developers' process, setbacks, lessons and player feedback before the next build. `docs/DEVELOPER_AND_PLAYER_REVIEW.md` records that documentary review and its evidence limits. Read it before implementation. It brings shared authority and two independent clients into the first integrated proof; no product gate passed during the review.
+
 Create a complete, original game informed by a focused study of classic StarCraft and RimWorld. Transfer the learning from our v0.1–v0.5 trials, not their architecture or limitations. Those experiments were very basic, unreliable and not representative of the intended product. This is not a task to finish, port, polish or recreate v0.5.
 
 The creator wants the satisfaction of base design, resource development and military capability together with survival, individual people, colony development and society planning. Study why the reference experiences work, decide how their principles can interact, and implement an original, coherent game.

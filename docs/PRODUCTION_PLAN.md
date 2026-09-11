@@ -4,7 +4,7 @@ Guidance 0.3, 2026-09-11. All new milestones are **unpassed**. The old restorati
 
 ## P1 — Prove why the colony grows
 
-Build a reproducible nine-region fixture with two economically active colonies and a contested resource outpost. Regions support building and cross-region travel, not decorative screens. Introduce ownership and faction-scoped stocks before opponent production. Reuse safe jobs, care and cargo. Replace restoration as the main purpose with supplied expansion and territorial control; show objective, benefit, bottleneck and next action.
+Build a reproducible nine-region fixture with two economically active colonies and a contested resource outpost. Regions support building and cross-region travel, not decorative screens. Introduce ownership and faction-scoped stocks before opponent production. Establish an authoritative command boundary from the start and connect two independent browser clients within P1, following the [developer/player review](DEVELOPER_AND_PLAYER_REVIEW.md). Reuse safe jobs, care and cargo. Replace restoration as the main purpose with supplied expansion and territorial control; show objective, benefit, bottleneck and next action.
 
 Acceptance:
 
@@ -13,13 +13,14 @@ Acceptance:
 - Supply physically reaches the outpost. Blockade depletes reserves before readiness changes; recovery conserves cargo.
 - Battle and occupation change ownership and productive output. Defeat permits retreat, treatment and rebuilding. Mobilization visibly costs domestic labor.
 - Save/restart preserves both colonies, ownership, routes and unfinished work. Region crossings neither duplicate nor lose people/goods.
+- Two independent clients act for separate factions in the same server-owned world. Reject commands against unowned assets. One client's menu/disconnect does not pause the other. Basic reconnect returns to the same colony; P2 supplies systematic durability and failure testing.
 - A reviewed 30–45 minute session covers preparation, expansion, conflict and aftermath. A fresh-player review checks five-minute goal comprehension and next-action clarity; scripted tests cannot establish this. Label developer judgment separately.
 
-This internal proof does not redefine v1. **First implementation action:** faction/region state contracts and a deterministic two-colony economy fixture, then the playable expansion loop.
+This internal proof does not redefine v1. **First implementation action:** authoritative command and faction/region state contracts, then a deterministic two-colony economy fixture and the playable expansion loop. The review proposes an initial comprehension screen with five first-time participants and at least four independently identifying the objective and next choice. This is an unexecuted usability threshold, not statistical validation; unavailable human evidence remains unverified.
 
 ## P2 — Prove persistence with real clients
 
-Move time and commands to a durable local server early, before broad content. Connect two independent browser clients with separate identities. Commands carry sequence IDs and ownership validation; rejection explains why. Rendering/prediction stays separate from authoritative results.
+Harden the local authority and two-client flow introduced in P1 before broad content. Commands carry sequence IDs and ownership validation; rejection explains why. Rendering/prediction stays separate from authoritative results. Expand restart and reconnect handling into explicit persistence, transaction and failure-recovery contracts.
 
 Acceptance: unauthorized commands fail; retries cannot double-spend; reconnect restores the same world; one client's pause/hide/disconnect cannot halt another; server restart preserves ownership/pending work. Test races over assets, reconnect during combat, malformed orders and crash recovery. Show an offline return summary. localStorage export is not shared persistence.
 
@@ -41,4 +42,4 @@ Run a 24-hour persistent-world soak with restart/disconnected-player cases, plus
 
 ## Ordering and release rule
 
-P1 proves purpose; P2 establishes authority before broad content; P3/P4 deliver conquest and larger-world play; P5 qualifies the whole. Resume research only for specific unresolved decisions. Record implementation, executed evidence and failures in PRODUCTION_STATUS.md. Issue #1 remains open until current V1_COMPLETION_CRITERIA.md passes. Research, P1 or the old tests cannot close it.
+P1 proves purpose with shared authority; P2 hardens persistence before broad content; P3/P4 deliver conquest and larger-world play; P5 qualifies the whole. The developer/player review's seven experiments supplement these gates with checks for control reliability, attention at scale and continued play after defeat. Resume research only for specific unresolved decisions. Record implementation, executed evidence and failures in PRODUCTION_STATUS.md. Issue #1 remains open until current V1_COMPLETION_CRITERIA.md passes. Research, P1 or the old tests cannot close it.
