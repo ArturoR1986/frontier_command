@@ -1,5 +1,16 @@
 # Production status
 
+## Creator playtest feedback — saved before shutdown, 11 September 2026
+
+The creator confirmed playing briefly while updates were being made. This is actual human feedback, but it does not identify every earlier client action or pass the formal human-play gates. The instruction now is to record feedback only and remain paused. Continue from the existing checkpoint when asked; do not start from scratch or reset the colony.
+
+- **Lag:** the game felt very laggy. On resumption, reproduce input/rendering/network responsiveness under ordinary play and active updates; existing simulation tick measurements do not explain or dismiss this report.
+- **Building space:** the usable building area felt limited and the presentation felt very tight/cramped. Review camera scale, navigation, interface coverage and access to the larger home terrain; nominal map dimensions alone do not establish a spacious experience.
+- **Wall placement:** explicitly support clicking and dragging with the pointer to place multiple wall segments, instead of requiring a separate click for each tile. The precise gesture implied by the transcribed phrase about a line is unclear; preserve the clear drag-placement requirement without inventing a confirmed shape constraint.
+- **Interactions and research:** the creator also reported difficulties involving interactions and research, but those portions of the voice transcription are too unclear to identify an exact failure. Review these flows on resumption; do not record a specific cause, failed command or research defect as established fact.
+
+These concerns should lead the next usability review before further feature expansion. No code changes, server restart or new play session are authorized by this feedback-only turn. The existing saved world and backup remain intact.
+
 ## Shutdown checkpoint — 11 September 2026, 14:28 UTC
 
 The creator needs to turn off the computer. Work is safely paused, not complete. The persistent server was stopped and the world checkpointed. Verified SQLite backup: `data/backups/world-2026-09-11T14-28-46-292Z.sqlite` (`PRAGMA integrity_check`: `ok`). Live database: `data/world.sqlite`. Both remain local and ignored by Git. Simulation time is 1784.9 seconds; Ashwater Union and Stonewake Review Colony are claimed, with 136 structures across the world. Preserve this world and its access keys; additional client actions were observed but their human origin and comprehension are unverified.
