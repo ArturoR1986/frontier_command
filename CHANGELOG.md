@@ -1,5 +1,16 @@
 # Frontier Command — Changelog
 
+## 0.6.0 — 2026-09-11 — Integrated production development milestone
+
+- Added modular deterministic simulation, terrain routing and physical storage/cargo.
+- Added colonist needs, priorities, direct commands, construction, food, power, research and recruitment.
+- Added exposure warnings, bounded first contact, tactical combat, salvage and recovery.
+- Added Canvas world rendering, camera, group selection, placement previews, onboarding, help and procedural audio.
+- Added versioned save/load, portable import/export and corrupt-save rejection.
+- Added simulation regressions, structured hour-long playthrough, browser smoke tests, stress profiling and CI.
+- Fixed depot-origin pathing, automatic stockpile escalation and UI refresh interrupting clicks during validation.
+- This milestone remains under release validation; it is not yet the completed v1.0 release.
+
 ## 2026-09-11 — Codex Handoff / Production Reset
 
 ### Added

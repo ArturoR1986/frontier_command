@@ -2,7 +2,7 @@ import { WIDTH, HEIGHT, BUILDINGS } from './catalog.js';
 import { cell, center } from './world.js';
 import { placement } from './simulation.js';
 
-const colors = ['#586451', '#5d7051', '#77786a', '#77705b'];
+const colors = ['#596452', '#596452', '#687362', '#736e59'];
 export const GLYPHS = { hub: '⌂', depot: '▤', habitat: '⌂', farm: '♧', generator: 'ϟ', workshop: '⚒', barracks: '⚑', turret: '⊕', sensor: '♜', wall: '▬' };
 export function screenToWorld(view, x, y) { return { x: (x - view.width / 2) / view.scale + view.x, y: (y - view.height / 2) / view.scale + view.y }; }
 export function worldToScreen(view, x, y) { return { x: (x - view.x) * view.scale + view.width / 2, y: (y - view.y) * view.scale + view.height / 2 }; }
@@ -62,6 +62,15 @@ function structure(c, b, time) {
     polygon(c, [[0.15, 0.85], [0.5, 0.1], [0.85, 0.85]], '#a4b1a0', '#33474b'); c.strokeStyle = '#dfd7b4'; c.lineWidth = 0.09; c.beginPath(); c.moveTo(0.5, 0.8); c.lineTo(0.5, -0.65); c.stroke(); c.fillStyle = '#b9d0c7'; c.beginPath(); c.ellipse(0.5, -0.5, 0.37, 0.12, Math.sin(time) * 0.4, 0, 7); c.fill();
   } else { c.fillStyle = '#9a9f90'; c.fillRect(0.08, 0.2, 0.84, 0.6); c.strokeRect(0.08, 0.2, 0.84, 0.6); c.fillStyle = '#535f5b'; c.fillRect(0.38, 0.2, 0.2, 0.6); }
   if (b.hp < d.hp) { c.strokeStyle = '#513b2c'; c.lineWidth = 0.045; c.beginPath(); c.moveTo(w * 0.3, h * 0.3); c.lineTo(w * 0.5, h * 0.55); c.lineTo(w * 0.38, h * 0.65); c.stroke(); c.fillStyle = '#412f29'; c.fillRect(0.05, h - 0.1, w - 0.1, 0.06); c.fillStyle = '#d89675'; c.fillRect(0.05, h - 0.1, (w - 0.1) * b.hp / d.hp, 0.06); }
+  // Hardware, wear and service aprons give the modular buildings a used frontier character.
+  if (w > 1) {
+    c.fillStyle = '#b8ad853f'; c.fillRect(0.25, h - 0.04, Math.min(1, w - 0.4), 0.17);
+    c.fillStyle = '#455655'; c.fillRect(w - 0.5, h - 0.42, 0.2, 0.22);
+    c.strokeStyle = '#314444'; c.lineWidth = 0.025;
+    for (let i = 0; i < 3; i++) { c.beginPath(); c.moveTo(w - 0.49, h - 0.38 + i * 0.05); c.lineTo(w - 0.31, h - 0.38 + i * 0.05); c.stroke(); }
+    c.fillStyle = '#e3dac4'; for (const [x, y] of [[0.22, 0.25], [w - 0.25, 0.25], [0.22, h - 0.26], [w - 0.25, h - 0.26]]) c.fillRect(x, y, 0.045, 0.045);
+    c.fillStyle = '#5b665d33'; for (let i = 0; i < 5; i++) c.fillRect(0.3 + (i * 0.47 % (w - 0.6)), 0.4 + (i * 0.37 % (h - 0.6)), 0.09, 0.025);
+  }
   if (d.demand && !b.powered) { c.font = 'bold 0.35px sans-serif'; c.fillStyle = '#f4d094'; c.fillText('ϟ OFF', 0.08, -0.08); }
   c.restore();
 }
@@ -92,10 +101,19 @@ export function render(canvas, minimap, s, ui) {
     const i = cell(x, y), t = s.terrain[i], hash = (Math.imul(x + 17, y + 113) % 19) / 19;
     c.fillStyle = s.explored[i] ? colors[t] : '#303e3b'; c.fillRect(x, y, 1.02, 1.02);
     if (!s.explored[i]) { c.fillStyle = '#8993810b'; c.fillRect(x + 0.1, y + 0.1, 0.02, 0.02); continue; }
-    c.fillStyle = hash > 0.5 ? '#e7e4b306' : '#101e2210'; c.fillRect(x, y, 1, 1);
+    c.fillStyle = hash > 0.5 ? '#e7e4b306' : '#101e2208'; c.beginPath(); c.ellipse(x + 0.5, y + 0.5, 0.65, 0.43, hash * 3, 0, 7); c.fill();
+    if (t === 1) {
+      c.fillStyle = '#80915b35'; c.beginPath(); c.ellipse(x + 0.5, y + 0.5, 0.58, 0.46, hash * 2, 0, 7); c.fill();
+      c.strokeStyle = '#95a67177'; c.lineWidth = 0.018;
+      for (let i = 0; i < 4; i++) { const px = x + 0.12 + (i * 0.31 + hash) % 0.75, py = y + 0.2 + (i * 0.23) % 0.65; c.beginPath(); c.moveTo(px, py); c.lineTo(px - 0.035, py - 0.12); c.moveTo(px, py); c.lineTo(px + 0.07, py - 0.07); c.stroke(); }
+    }
     if (t === 2) { c.fillStyle = '#293a3b66'; c.fillRect(x + 0.12, y + 0.2, 0.9, 0.8); polygon(c, [[x + 0.04, y + 0.4], [x + 0.3, y + 0.05], [x + 0.77, y + 0.14], [x + 0.98, y + 0.65], [x + 0.65, y + 0.93], [x + 0.1, y + 0.87]], '#828474', '#667365'); polygon(c, [[x + 0.04, y + 0.4], [x + 0.3, y + 0.05], [x + 0.77, y + 0.14], [x + 0.55, y + 0.46]], '#969583'); }
     else { c.fillStyle = t === 1 ? '#afbb7950' : '#b8bd9440'; c.fillRect(x + hash * 0.7, y + 0.3, 0.06, 0.035); c.fillRect(x + 0.6, y + hash, 0.035, 0.035); }
-    if (s.trails[i] > 2) { c.fillStyle = `rgba(174,157,121,${Math.min(0.35, s.trails[i] / 180)})`; c.beginPath(); c.ellipse(x + 0.5, y + 0.5, 0.3, 0.24, hash, 0, 7); c.fill(); }
+    if (s.trails[i] > 2) {
+      const opacity = Math.min(0.28, s.trails[i] / 180); c.strokeStyle = `rgba(174,157,121,${opacity})`; c.lineWidth = 0.25;
+      for (const [dx, dy] of [[1, 0], [0, 1]]) if (x + dx < WIDTH && y + dy < HEIGHT && s.trails[cell(x + dx, y + dy)] > 2) { c.beginPath(); c.moveTo(x + 0.5, y + 0.5); c.lineTo(x + dx + 0.5, y + dy + 0.5); c.stroke(); }
+      c.lineWidth = 0.035;
+    }
   }
   for (const n of s.nodes) {
     if (n.amount <= 0 || !s.explored[cell(n.x, n.y)]) continue;

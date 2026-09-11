@@ -4,11 +4,11 @@ import { pathToFileURL } from 'node:url';
 const moduleName = process.env.PLAYWRIGHT_PATH ? pathToFileURL(process.env.PLAYWRIGHT_PATH).href : 'playwright';
 const { chromium } = await import(moduleName);
 const server = spawn(process.execPath, ['scripts/serve.mjs', '--dist'], { stdio: 'pipe', env: { ...process.env, PORT: '4174' } });
-let browser;
+let browser, page;
 try {
   await new Promise((resolve, reject) => { server.stdout.once('data', resolve); server.once('error', reject); server.once('exit', c => reject(new Error(`Server exited ${c}`))); });
   browser = await chromium.launch({ headless: true, ...(process.env.BROWSER_PATH ? { executablePath: process.env.BROWSER_PATH } : {}) });
-  const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+  page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
   const errors = []; page.on('pageerror', e => errors.push(e.message));
   await page.goto('http://127.0.0.1:4174');
   await page.getByRole('button', { name: 'Begin landing' }).click();
@@ -78,8 +78,32 @@ try {
   await page.evaluate(() => localStorage.setItem('frontier-command-save', '{corrupt'));
   await page.locator('#load').click();
   if ((await page.evaluate(() => window.frontier.snapshot().time)) !== validTime) throw new Error('Corrupt save replaced current state');
+  // Verify core intelligence remains on screen at the minimum supported desktop size.
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.waitForTimeout(200);
+  const intelligence = await page.locator('#threat').boundingBox();
+  if (!intelligence || intelligence.y + intelligence.height > 630) throw new Error('Critical intelligence panel is below the visible workspace');
+  const stress = await readFile('artifacts/stress-colony.json', 'utf8');
+  await page.evaluate(text => localStorage.setItem('frontier-command-save', text), stress);
+  await page.locator('#load').click();
+  await page.setViewportSize({ width: 1600, height: 1000 });
+  for (let i = 0; i < 4; i++) await page.locator('#zoom-out').click();
+  const frames = await page.evaluate(async () => {
+    const times = []; let previous = performance.now();
+    for (let i = 0; i < 240; i++) { await new Promise(requestAnimationFrame); const now = performance.now(); times.push(now - previous); previous = now; }
+    return times.slice(10).sort((a, b) => a - b);
+  });
+  const browserPerformance = { frameMs: { median: frames[Math.floor(frames.length * 0.5)], p95: frames[Math.floor(frames.length * 0.95)], p99: frames[Math.floor(frames.length * 0.99)] }, population: await page.evaluate(() => window.frontier.snapshot().people.length), buildings: await page.evaluate(() => window.frontier.snapshot().buildings.length) };
+  await writeFile('artifacts/browser-performance.json', JSON.stringify(browserPerformance, null, 2));
+  if (browserPerformance.frameMs.p95 > 50) throw new Error(`Frame pacing below 20fps target: ${JSON.stringify(browserPerformance)}`);
   if (await page.locator('#fatal').isVisible()) throw new Error('Fatal panel visible');
   if (errors.length) throw new Error(errors.join('\n'));
   await writeFile('artifacts/smoke.json', JSON.stringify({ passed: true, checks: ['boot', 'new game', 'simulation running', 'roster selection', 'pause', 'save', 'reload', 'load', 'zoom', 'help', 'placement', 'overlap rejection', 'group selection', 'group move', 'stop', 'pan', 'midgame load', 'corrupt save rejection', 'far/normal/close', '1440x900', '1280x720'], errors }, null, 2));
   console.log('Browser smoke passed; screenshots in artifacts/.');
+} catch (error) {
+  if (page) {
+    await page.screenshot({ path: 'artifacts/smoke-failure.png' });
+    console.error(await page.evaluate(() => ({ dialogs: [...document.querySelectorAll('dialog')].map(d => [d.id, d.open]), fatal: document.getElementById('fatal').textContent, roster: document.getElementById('roster').getBoundingClientRect().toJSON() })));
+  }
+  throw error;
 } finally { if (browser) await browser.close(); server.kill(); }

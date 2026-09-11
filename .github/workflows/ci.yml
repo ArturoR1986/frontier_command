@@ -13,6 +13,7 @@ jobs:
       - run: node scripts/check.mjs
       - run: node --test
       - run: node scripts/build.mjs
+      - run: node --expose-gc scripts/profile.mjs
       - run: npm install --no-save playwright@1.58.2
       - run: npx playwright install --with-deps chromium
       - run: node scripts/smoke.mjs

@@ -10,6 +10,16 @@ const escape = value => String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', 
 let state = newGame(), paused = false, started = false, last = performance.now(), accumulator = 0, lastUI = 0, autosave = 0, lastEvent = '';
 const ui = { view: { x: 22, y: 24, scale: 32, width: 800, height: 600 }, selected: [], build: null, mouse: null, drag: null, marker: null };
 const keys = new Set(), audio = new AudioLayer(), canvas = $('world');
+function markup(id, html) {
+  const element = $(id);
+  if (element.innerHTML === html) return;
+  const focus = element.contains(document.activeElement) ? { ...document.activeElement.dataset } : null;
+  element.innerHTML = html;
+  if (focus) {
+    const match = [...element.querySelectorAll('button')].find(b => Object.entries(focus).every(([k, v]) => b.dataset[k] === v));
+    match?.focus({ preventScroll: true });
+  }
+}
 function fatal(error) { paused = true; $('fatal').hidden = false; $('fatal').querySelector('pre').textContent = error?.stack || String(error); }
 window.addEventListener('error', e => fatal(e.error || e.message));
 window.addEventListener('unhandledrejection', e => fatal(e.reason));
@@ -38,7 +48,7 @@ function updateUI() {
   $('speed').textContent = `${state.settings.speed}×`;
   $('objective').textContent = objective(state); $('objective').hidden = !state.settings.guide;
   $('population').textContent = `${state.people.length} / ${capacity(state)}`;
-  $('roster').innerHTML = state.people.map(p => `<button class="person ${ui.selected.includes(p.id) ? 'active' : ''}" data-person="${p.id}"><span class="portrait" style="--person:${escape(p.color)}">${p.ranger ? '♟' : '♙'}</span><span><strong>${escape(p.name)}</strong> <span class="role">${escape(p.role)}</span><span class="task">${escape(p.activity)}</span></span><span class="hp">${Math.ceil(p.hp)}♥</span></button>`).join('');
+  markup('roster', state.people.map(p => `<button class="person ${ui.selected.includes(p.id) ? 'active' : ''}" data-person="${p.id}"><span class="portrait" style="--person:${escape(p.color)}">${p.ranger ? '♟' : '♙'}</span><span><strong>${escape(p.name)}</strong> <span class="role">${escape(p.role)}</span><span class="task">${escape(p.activity)}</span></span><span class="hp">${Math.ceil(p.hp)}♥</span></button>`).join(''));
   $('invite').disabled = state.people.length >= Math.min(16, capacity(state)) || stock.food < 20 || state.time < 120;
   const selected = [...state.people, ...state.buildings, ...state.nodes, ...state.hostiles].find(p => ui.selected.includes(p.id));
   $('selection-count').textContent = ui.selected.length ? `${ui.selected.length} SELECTED` : '';
@@ -52,7 +62,7 @@ function updateUI() {
     if (b.kind === 'workshop' && b.complete) html += `<p>${state.research ? `Researching ${UPGRADES[state.research.kind].name} · ${Math.floor(state.research.progress / 90 * 100)}%` : 'Choose what the colony needs next.'}</p><div class="actions">${Object.entries(UPGRADES).map(([k, u]) => `<button data-research="${k}" title="${u.description}" ${state.upgrades.includes(k) || state.research || !b.powered || stock.alloy < u.cost ? 'disabled' : ''}>${u.name}${state.upgrades.includes(k) ? ' ✓' : ` · ${u.cost} alloy`}</button>`).join('')}</div>`;
   } else if (selected?.amount !== undefined) html = `<h3>${selected.kind === 'alloy' ? 'Mineral outcrop' : selected.kind === 'food' ? 'Edible basin shrubs' : 'Scrub biomass'}</h3><p>${selected.amount} ${selected.kind} remaining.</p><p>Select settlers, then right-click here to gather. Cargo must reach a depot before it becomes available.</p>`;
   else if (selected) html = `<h3>Basin scavenger</h3><p>${selected.retreat ? 'Retreating' : 'Approaching the settlement'} · ${Math.ceil(selected.hp)} health</p><p>Select Kei and right-click this contact to engage.</p>`;
-  $('inspection').innerHTML = html;
+  markup('inspection', html);
   $('phase').textContent = state.threat.phase;
   $('threat').innerHTML = `<div class="exposure"><strong>${state.threat.exposure}</strong><span>EXPOSURE</span></div><p class="muted">${Object.entries(state.threat.contributors).map(([k, v]) => `${k} ${v}`).join(' · ')}</p>${state.threat.warning ? `<div class="warning">⚠ ${state.threat.warning.count} contacts from the ${state.threat.warning.direction.toUpperCase()}<br>ETA ${Math.max(0, Math.ceil(state.threat.warning.arrival - state.time))}s · Rally Kei, check powered defenses.</div>` : `<p class="muted">${state.time < 1200 ? `Learning window · ${Math.ceil((1200 - state.time) / 60)} min of safe settlement building.` : state.hostiles.length ? `${state.hostiles.length} contacts in the basin. Protect your people.` : 'Listen to the horizon. Growth draws attention.'}</p>`}`;
   $('journal').innerHTML = [...state.events].reverse().slice(0, 5).map(e => `<div class="journal-entry"><time>${Math.floor(e.time / 60)}:${String(Math.floor(e.time % 60)).padStart(2, '0')}</time>${escape(e.text)}</div>`).join('');
