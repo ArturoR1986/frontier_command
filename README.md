@@ -11,11 +11,10 @@ Requires Node.js 22+ and desktop Chrome or Edge. No dependency installation is n
 ```sh
 git clone https://github.com/ArturoR1986/frontier_command.git
 cd frontier_command
-git switch codex/issue-1-v1
 node scripts/serve.mjs
 ```
 
-Open **http://127.0.0.1:4173** and choose **Begin landing**. Stop the server with Ctrl+C. The branch switch is needed until the implementation is merged into main.
+Open **http://127.0.0.1:4173** and choose **Begin landing**. Stop the server with Ctrl+C.
 
 ## Production build
 

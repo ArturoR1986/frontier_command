@@ -2,7 +2,7 @@
 
 Date: 2026-09-11. Reviewer: Codex. Scope: the original `V1_COMPLETION_CRITERIA.md`, unchanged.
 
-Local release checks pass. The final release revision is awaiting the hosted CI confirmation recorded below; this report does not substitute an earlier milestone's CI result for that revision.
+Release gate: PASS for the declared desktop sandbox scope. Runtime revision e23b2fd6ea6008609916d320aaceefde24cbb347 passed local checks and hosted CI. The final 1.0 browser opening rerun also passed. No original completion criterion was removed or weakened.
 
 ## Executed checks
 
@@ -17,7 +17,7 @@ Local release checks pass. The final release revision is awaiting the hosted CI 
 | Opening | Real browser via normal 4× speed and UI commands: 20 simulated minutes, no browser errors, housing/farm/generation/workshop/sensor/defenses, recruitment, research, save/load |
 | Integrated hour | Landing → economy → warning → contact → recovery → save/load → continued play for 3,600 simulated seconds |
 | Maximum fixture | 16 settlers / 80 structures / 64×48 map for another 3,600 simulated seconds; bounded retained memory and simulation time |
-| Hosted CI | Pending final release push; earlier development milestone passed run 34588899260 |
+| Hosted CI | [Release CI passed](https://github.com/ArturoR1986/frontier_command/actions/runs/34590285658) on runtime revision e23b2fd6ea6008609916d320aaceefde24cbb347 |
 
 Generated machine-readable reports and selected screenshots are preserved in `docs/qa/`. The scripts regenerate the raw artifacts in `artifacts/`.
 
@@ -40,10 +40,10 @@ Generated machine-readable reports and selected screenshots are preserved in `do
 | 19: audio | Pass | Original synthesized UI/work/environment/combat/warning cues, gesture activation and volume control; no third-party recordings |
 | 20: performance | Pass for measured targets | Simulation and browser profiling below declared thresholds; bounded state/history and retained heap |
 | 21–22: usability/errors | Pass within desktop scope | Text/symbol states, pause/speed/help, keyboard-focus retention, actionable invalid-order feedback, guarded startup and rejected corrupt saves |
-| 23–24: tests/CI | Local tests pass; final CI pending | Pure logic and integrated regressions, browser launch/action suite, workflow packaging and artifact upload |
+| 23–24: tests/CI | Pass | Pure logic and integrated regressions, browser launch/action suite, workflow packaging and artifact upload |
 | 25–26: documentation/rights | Pass | Actual local run/build path, architecture, controls, testing, credits, changelog and release notes; original project art/audio |
 | 27: structured playthroughs | Pass | Details below |
-| 28: release gate | Pending final hosted CI and final evidence recording | No locally known blocking defect |
+| 28: release gate | Pass | Final runtime CI, opening rerun, package launch and release evidence recorded; no known blocking defect |
 
 ## Structured playthroughs
 
@@ -70,3 +70,7 @@ Headless local Chrome at 1600×1000: median frame interval 16.7 ms, p95 17.5 ms,
 ## Limitations and review boundary
 
 One biome; sandbox only; finite mineral/biomass deposits; no mobile, multiplayer or cloud saves. System-generated visual/audio assets are intentionally compact. Canvas gameplay is not fully screen-reader operated. Human population-wide enjoyment/accessibility studies were not performed. These are declared scope boundaries, not hidden blocking defects; no original completion criterion was removed or weakened.
+
+## Final delivery verification
+
+The independently extracted ZIP launched with its bundled `node serve.mjs`; a real browser began a new colony with four people and an advancing simulation, with zero page errors. Final opening evidence and snapshots accompany this report. ZIP SHA-256: `48931BA5FEA0551307C744DD982CCB63DACD758363B3EBB07A1A4029C3BE2AF1`. Documentation-only completion commits do not change the tested runtime.

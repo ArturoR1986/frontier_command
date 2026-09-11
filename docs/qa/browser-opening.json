@@ -2,7 +2,7 @@
   "passed": true,
   "realBrowser": true,
   "simulationSpeed": "4x user control",
-  "finalTime": 1207.2999999999975,
+  "finalTime": 1207.0999999999976,
   "errors": [],
   "report": [
     {
@@ -18,7 +18,7 @@
       "objective": "1 / SETTLE IN — Select Tomas, then right-click a mineral cluster. Watch him gather, carry and deposit."
     },
     {
-      "time": 241.69999999999055,
+      "time": 240.49999999999062,
       "people": 4,
       "buildings": [
         {
@@ -46,7 +46,7 @@
       "objective": "5 / CAPABILITY — Build a Workshop and choose an improvement. Invite settlers when you have beds and food."
     },
     {
-      "time": 481.00000000004087,
+      "time": 480.3000000000407,
       "people": 4,
       "buildings": [
         {
@@ -86,7 +86,7 @@
       "objective": "5 / CAPABILITY — Build a Workshop and choose an improvement. Invite settlers when you have beds and food."
     },
     {
-      "time": 721.9000000000956,
+      "time": 720.9000000000954,
       "people": 5,
       "buildings": [
         {
@@ -130,7 +130,7 @@
       "objective": "5 / CAPABILITY — Build a Workshop and choose an improvement. Invite settlers when you have beds and food."
     },
     {
-      "time": 961.7000000001501,
+      "time": 960.7000000001499,
       "people": 5,
       "buildings": [
         {
