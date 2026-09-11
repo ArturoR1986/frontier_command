@@ -1,0 +1,51 @@
+# Frontier Command — Changelog
+
+## 2026-09-11 — Codex Handoff / Production Reset
+
+### Added
+
+- `AGENTS.md` — Codex operating contract and autonomy rules.
+- `docs/PROJECT_HANDOFF.md` — complete project history, design intent, creator feedback, and prototype lessons.
+- `docs/V1_COMPLETION_CRITERIA.md` — final product release gate.
+- `docs/DECISIONS.md` — durable decision log.
+- `README.md` — repository entry point.
+
+### Changed
+
+- Project ownership moved from conversational prototyping to Codex-led production implementation.
+- Product target explicitly changed from iterative prototype to complete tested v1.0.
+- Human involvement reduced to genuine direction, specific gameplay references, external-action blockers, or irreversible choices.
+
+### Historical prototype summary
+
+#### v0.1
+
+- Browser prototype with four colonists, resources, building, needs, Rangers, and simple raids.
+- Visuals were primarily debug primitives.
+
+#### v0.2
+
+- Established Ashwater Basin visual direction.
+- Added stronger unit/building silhouettes and environment grammar.
+- Terrain still lacked real mechanical blocking.
+
+#### v0.3
+
+- Added camera zoom/pan and clearer task/status feedback.
+- Fixed a multi-tile construction completion-distance bug.
+- Delayed/reduced first hostile encounter after playtest feedback.
+
+#### v0.4 design direction
+
+- Locked the principle that work should be understandable by watching the world.
+- Prioritized physical logistics, staged construction, meaningful terrain, quiet-life simulation, day/night, and telegraphed threats.
+
+#### v0.5 / v0.5.1 experiments
+
+- Explored physical hauling, work autonomy, power, Exposure, Sensor/Workshop/Barracks functions, minimap, warnings, and richer terrain.
+- v0.5 suffered a startup initialization failure that produced a blank gameplay shell.
+- v0.5.1 recovery build simplified startup and added visible fatal-error handling.
+
+### Testing lesson
+
+A build is not considered delivered merely because source exists or syntax passes. It must launch, run, and survive structured gameplay testing.
