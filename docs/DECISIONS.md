@@ -2,6 +2,24 @@
 
 This file records durable design/engineering decisions. Do not use it for trivial implementation details.
 
+## 2026-09-11 — Deterministic browser production core
+
+**Decision:** Use native JavaScript ES modules with a fixed-step, serializable simulation, a Canvas 2D world and semantic HTML controls. Use Node's built-in test runner and static production packaging; Playwright verifies the browser path.
+
+**Reason:** The bounded 64×48 basin and target of 16 settlers do not require an engine dependency. Simulation tests can exercise a complete hour quickly without the renderer. A local Node server provides one consistent run path across Windows and CI.
+
+**Alternatives:** A full game engine or a UI framework. Both remain possible later but add dependencies without resolving the immediate reliability risks.
+
+**Tradeoff:** The project owns its pathing, rendering and input code. Regression coverage and actual browser inspection are required. Original vector-like canvas art and synthesized audio avoid external asset licensing and network dependencies.
+
+## 2026-09-11 — Physical inventory and bounded attention
+
+**Decision:** Store resources at real depots, retain cargo across interrupted jobs, and claim construction quantities only when a worker withdraws them. Automatically replenish modest stock targets; the player can order extra extraction. Cap the wealth contribution to Exposure, fix the first contact at two scouts, and bound later groups by colony population.
+
+**Reason:** Initial integration testing found both a blocked-depot-origin routing fault and runaway Exposure from unlimited automatic stockpiling. Reachable building edges, transactional pickup and explicit stock targets avoid these failures.
+
+**Tradeoff:** This is a compact logistics model with pooled spending for research and local physical construction delivery. A 20-minute learning floor is a pacing safeguard; actual hostile attention still requires colony Exposure.
+
 ## 2026-09-11 — Codex becomes primary implementation owner
 
 **Decision:** Codex takes over implementation continuity through complete v1.0.
