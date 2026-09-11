@@ -1,5 +1,35 @@
 # Production status
 
+## Active implementation checkpoint — 11 September 2026
+
+The creator requested a final multi-video gameplay review followed by autonomous implementation through completion. [GAMEPLAY_VIDEO_REVIEW.md](GAMEPLAY_VIDEO_REVIEW.md) records three distinct videos per reference with exact inspected frames/narration and limitations. The previous research-only status below is historical. **P1 is being implemented; P1–P5 product gates remain unpassed.** Do not restart general research or return to the old small-map scope.
+
+New code is preserved separately in `src/frontier/`. New entry: `node scripts/frontier-server.mjs` → **http://127.0.0.1:4180/**. `npm run dev` now selects this persistent server; `npm run legacy` retains the 4173 prototype. Version: 1.0.0-dev.1. Source baseline before these changes: c14042c.
+
+Written systems: 256×256 home terrain; two realms of nine regions; four factions; physical gathering/hauling/construction; priorities, persistent practice, meals, rest, social activity and treatment; research/power/fabrication; three robot and three crewed-vehicle roles; boarding, separate hull/crew damage, travel quotes and journeys; diplomacy, escrowed trade, supplied occupation and persistent victory records. Feature writing does not establish all behavior or release quality. Candidate commands and durable SQLite receipts prevent partial rejected orders and replay duplication. Both realms live in one authority, so crossings are atomic location changes rather than separately acknowledged servers. Default hosting is loopback; no public deployment occurred. Ignored database: `data/world.sqlite`.
+
+Executed evidence:
+
+- `node --test tests/frontier.test.js`: **13/13 passed**. Deterministic terrain, construction delivery, cancellation/cargo recovery, large-map blocked navigation, crew/travel identity, ownership and malformed quantities, SQLite crash replay/idempotency, simultaneous-builder cost conservation, basic/advanced fabrication costs, disabled hull/crew separation, cross-realm arrival exactly once, supplied occupation and escrowed trade.
+- Engine/client/renderer syntax checks passed. Full regression and new-package qualification remain to be run.
+- Two actual browser tabs connected as different colonies to the same server. The first completed a bed while the second held a menu open. Reload returned to the same colony. Lobby, home and world screenshots inspected; browser error log empty at that inspection. This is agent-operated browser evidence, not human play or complete UI qualification.
+- `node scripts/frontier-profile.mjs`: 18 regions, 4 colonies, 400 people, 160 robots, 32 **uncrewed** vehicles, 1,000 structures; 10 simulated seconds, no wars. Windows/Node v24.19.0/i7-13650HX/20 logical cores/31.7 GB RAM. For map widths 128/256/512, p95 tick = 24.90/22.04/32.28 ms; maximum = 48.37/52.49/93.45 ms; serialized world = 2.4/7.6/28.4 MB. Select 256 as the current candidate. This does not pass active-battle/client-frame/24-hour qualification.
+- Fixed defects: placement preview mutated persistent topology; concurrent fetches could over-deliver construction; canceled queues retained fetch destinations; room evaluation needed caching. Current targeted tests pass after these fixes.
+
+Exact next work:
+
+1. Complete integrated home-to-industry and expedition/battle browser review, using clearly labeled advanced fixtures where necessary. Verify priorities, production, roles/counters, treatment, physical fuel service, room behavior and practice. Improve map/structure readability and the world grid's geographic/route presentation.
+2. Audit known gaps: economically funded AI projection beyond its home; local aircraft terrain traversal matching its claim; attack-move holding to engage; recovery that lets defeated people establish a new home; broader cargo/reservation/death failure tests. These are not established by the current tests.
+3. Finish P1, harden P2 receipts/crash/reconnect, and complete P3/P4 conquest/offline/diplomacy/realm behavior. Four-client human cross-realm play has not occurred.
+4. Update the distributed build, recursive checks, CI and launch instructions; run useful legacy and new regressions, actual-package launch, admin backup/recovery and the active-load benchmark. The required 24-hour persistent soak has not run.
+5. Continue skeptical play review. Human comprehension, attachment, pacing, fairness and actual human cross-realm play remain unverified. Do not replace those gates with scripted clicks or accelerated time.
+
+The experimental one-hour core notice, two-minute frontier notice and supplied occupation values are implementation candidates, not creator-approved fairness findings. Issue #1 remains OPEN / in progress. The documentary PDF is unchanged. Historical runtime 6814c55 and its 35 tests cover only the rejected 64×48 restoration scope. The historical FINAL_QA_REPORT.md cannot certify this build.
+
+---
+
+## Historical research-only checkpoint (superseded by active implementation above)
+
 2026-09-11 · guidance revision 0.4 · owner Codex · Issue #1 OPEN / in progress.
 
 ## Current milestone

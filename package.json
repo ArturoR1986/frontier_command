@@ -1,11 +1,13 @@
 {
   "name": "frontier-command",
-  "version": "1.0.0",
+  "version": "1.0.0-dev.1",
   "private": true,
   "type": "module",
   "engines": { "node": ">=22" },
   "scripts": {
-    "dev": "node scripts/serve.mjs",
+    "dev": "node scripts/frontier-server.mjs",
+    "legacy": "node scripts/serve.mjs",
+    "frontier:profile": "node scripts/frontier-profile.mjs",
     "build": "node scripts/build.mjs",
     "check": "node scripts/check.mjs",
     "test": "node --test",

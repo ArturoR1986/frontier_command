@@ -59,3 +59,10 @@ Status: implemented in release runtime 6814c55. After the reference comparison i
 Retain the independently implemented Ashwater setting, deterministic simulation and physical economy because they support this synthesis; the old trials are not the code foundation or acceptance roster. Extend the social/active-progression layers that the corrected brief exposed as missing. Bound v1 at one basin, sixteen people, twelve structures, three improvements and three restored installations, with continued sandbox after achievement. The tradeoff is approachable tactical depth and compact social modeling rather than large armies or simulated relationships.
 
 Executed evidence: all three sites restored using real travel/combat/deliveries; duty preserves loaded cargo across save and resume; care restores a wounded specialist at a two-food staffing cost; depot/home comparisons and charter/reward comparisons demonstrate actual effects. Static checks, 35 tests, browser civic/expedition sessions and the extracted package pass. Final evidence and exact package hash are recorded in FINAL_QA_REPORT.md.
+# 11 September 2026 — Implement the asymmetric hybrid
+
+The final six-video pass is recorded in GAMEPLAY_VIDEO_REVIEW.md. Adopt colony-first construction, resource logistics and persistent skill development; make manufactured forces and crewed transport emerge from that economy later. Exact normal pacing remains a play hypothesis.
+
+Implement a separate modular simulation and authoritative Node/SQLite world, preserving the former local prototype. Both realms currently live in one authority: atomic ownership changes avoid an unnecessary distributed transaction boundary while retaining distinct realms and real travel. Use 256×256 local maps after comparative 128/256/512 baseline profiling; final active-load qualification is still required. Ordinary production decisions proceed without another approval milestone.
+
+The first 13 targeted tests and two independent browser sessions establish specific mechanisms, not P1 completion or human enjoyment. See PRODUCTION_STATUS.md for current gaps and exact next work.

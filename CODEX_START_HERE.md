@@ -6,6 +6,8 @@ Mission: https://github.com/ArturoR1986/frontier_command/issues/1
 
 ## Current direction and next action
 
+**Implementation is now active.** The creator's final instruction is to finish the multi-video study, then build and review autonomously until the game is complete. Read `docs/GAMEPLAY_VIDEO_REVIEW.md` and the current `docs/PRODUCTION_STATUS.md`. New code is in `src/frontier/`, with `node scripts/frontier-server.mjs` serving the persistent development build at http://127.0.0.1:4180/. Continue that work; the research-only checkpoint below is historical. No current release gate has been declared passed.
+
 Latest creator refinement: substantial local home-map play shaped by mountains, resources and terrain; a much larger world map with tribes/players and meaningful travel distances; mobility improved by technology and vehicles; long-developed civilian specialists operating valuable vehicles; manufactured robots at varied costs as the more replaceable military force. Offline attacks remain possible, with detailed rules to be worked out in play. Earlier siege timings and the rushed first-hour expedition example are not fixed requirements.
 
 The creator rejected the earlier restoration sandbox as completion: purpose is unclear, the map is too small, and growth does not lead to conquest. References are **RimWorld and classic StarCraft**, not Factorio. The creator explicitly chose **persistent worlds with lasting colonies**. Strong colonies must take territory, grow into a wider world, and cooperate or fight with powerful colonies from other realms.
