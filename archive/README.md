@@ -1,84 +1,13 @@
-# Frontier Command — Prototype Archive Notes
+# Historical trial material — optional evidence only
 
-This folder is for historical prototypes and experiments only.
+Guidance revision: 0.2 | Updated: 2026-09-11
 
-Do not treat archived implementations as the required production architecture.
+The creator's v0.1–v0.5 experiments are learning material, not the product Codex must continue. Their lessons are in `../docs/TRIAL_LESSONS.md`.
 
-## Prototype lineage
+At the inspected handoff revision this directory contained only this README. The earlier statement that a recovery prototype was already preserved here was inaccurate. No archived game source or recordings are supplied by this guidance revision.
 
-### v0.1
+Recovering old files is optional, not a dependency or a reason to stop. If independently useful material becomes available, label its origin, version, observed behavior and known limits. Preserve unrelated repositories unchanged. Do not recreate missing source from memory and present it as the original.
 
-Self-contained browser prototype demonstrating:
+Do not include private recordings or borrowed commercial game assets in a public archive without the relevant authority. An attachment path from ChatGPT is not a file available in a Codex checkout.
 
-- four named colonists
-- Alloy / Biomass / Food
-- base construction
-- needs
-- Rangers
-- turrets
-- simple raids
-
-### v0.2
-
-Visual-direction prototype:
-
-- Ashwater Basin
-- stronger building footprints
-- stronger unit silhouettes
-- environment grammar
-- separate simulation/render direction
-
-### v0.3
-
-Playtest-focused prototype:
-
-- camera zoom/pan
-- task feedback
-- construction bug fix
-- slower opening
-- telegraphed first raid
-
-### v0.5 staged source
-
-A larger experimental self-contained build was previously staged in another repository during prototyping:
-
-`ArturoR1986/peaklogic-intake-console`
-
-Branch:
-
-`artifact-transfer`
-
-Path:
-
-`frontier-command-v0.5.html`
-
-This file is reference material only. It experienced a startup initialization failure in the creator's real test, showing that the UI shell could load while the simulation did not.
-
-### v0.5.1 recovery experiment
-
-A local recovery build was subsequently created with:
-
-- auto-start instead of the fragile start menu path
-- visible fatal-error panel
-- simplified colony startup
-- colonists/resources/buildings populated immediately
-- construction, hauling, power, Exposure, camera, minimap, and basic AI retained in simplified form
-- JavaScript syntax check passed
-
-The recovery build was useful as debugging evidence but is not considered production-quality or a required base for v1.
-
-## Lessons Codex must preserve
-
-1. **Run the game, not just syntax/build checks.**
-2. A visually loaded UI can still hide a dead simulation.
-3. Startup needs a smoke test.
-4. Multi-tile construction needs regression coverage.
-5. Work should be world-visible.
-6. Early combat should not destroy onboarding.
-7. The production architecture may be rebuilt cleanly.
-
-## Archive policy
-
-When Codex replaces a meaningful playable milestone, preserve the previous version here only when it remains useful for regression/reference.
-
-Do not let old prototypes become active dependencies unless intentionally migrated and tested.
+Use new tests to cover the failure classes we learned about. Choose the new implementation for the new design.

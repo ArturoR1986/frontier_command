@@ -1,107 +1,29 @@
-# Frontier Command — Decision Log
+# Decision log — intent, hypotheses and chosen design
 
-This file records durable design/engineering decisions. Do not use it for trivial implementation details.
+Guidance revision: 0.2 | Updated: 2026-09-11
 
-## 2026-09-11 — Codex becomes primary implementation owner
+## 2026-09-11 — Creator correction: learning transfer, not prototype continuation
 
-**Decision:** Codex takes over implementation continuity through complete v1.0.
+**Status: adopted user intent.** The early v0.1–v0.5 experiments are a learning curve and failure record, not a representation of the desired game. Codex is commissioned to study the reference games, synthesize an original design and create the finished product. Old code recovery, preservation or repair is not required for production.
 
-**Reason:** The project has enough design clarity to build, and the creator wants minimal intervention.
+Reason: the creator explicitly rejected treating the very basic, unreliable prototypes as the foundation to complete.
 
-**Working rule:** Codex makes routine design/engineering choices autonomously, tests them, and continues. Human input is reserved for true directional ambiguity, specific gameplay-reference needs, unavailable external actions, or irreversible choices.
+Implication: replace the previous continuation framing in the entry points, mission and release gate. Preserve useful existing Codex work after evaluating it against this corrected intent; do not erase it reflexively.
 
-**Tradeoff:** Codex receives broad implementation authority and therefore must compensate with stronger testing, documentation, and self-review.
+## 2026-09-11 — What remains fixed
 
----
+**Status: user goals and working arrangement.** Study classic StarCraft and RimWorld; create an original combination rather than a copy; support base/resources/military capability and survival/people/settlement/society development; make world contents and actions distinguishable; make building enjoyable and avoid the premature, overwhelming pressure reported in the trials. Codex owns routine research, engineering, testing and delivery; human involvement is for genuine direction, narrowly needed examples or required external authority.
 
-## 2026-09-11 — v1.0 means final product, not prototype
+## 2026-09-11 — Earlier product doctrines reclassified
 
-**Decision:** Completion is governed by `docs/V1_COMPLETION_CRITERIA.md` rather than by milestone labels such as prototype, alpha, or vertical slice.
+**Status: provisional hypotheses, not locked decisions.** Ashwater Basin, the four named founders, Alloy/Biomass, the prototype structure roster, exact construction/hauling sequence, orthographic 2.5D, day/night, worn trails, the single-file browser target and the named Exposure system may be retained, altered or rejected after study and tests.
 
-**Reason:** Earlier builds demonstrated ideas but were sometimes delivered before full launch/play validation.
+The phrases about wilderness becoming infrastructure and growth increasing exposure are useful candidate framing, not proof of the right final design. Earlier decisions that mandated these particulars are superseded by this classification. Earlier versions remain in Git history.
 
-**Tradeoff:** The implementation phase is larger, but the stop condition becomes honest and testable.
+## 2026-09-11 — Evidence and release discipline retained
 
----
+**Status: required operating practice.** Source writing is not verified behavior; a passed syntax check is not a launch/playtest. Tests must cover the distributed artifact and the integrated experience. Keep known defects and evidence limits visible. Finish a finite original product scope rather than merely updating a prototype version number.
 
-## 2026-09-11 — Product identity
+## Recording future decisions
 
-**Decision:** The core identity is:
-
-> Turn wilderness into infrastructure while the world gradually notices you.
-
-**System rule:** Growth increases capability and exposure at the same time.
-
-**UX rule:** Important actions should be understandable by watching the world, not only by reading UI text.
-
-**Reason:** These rules distinguish Frontier Command from merely combining familiar RTS and colony-sim feature lists.
-
----
-
-## 2026-09-11 — Colony building precedes pressure
-
-**Decision:** The opening prioritizes settlement-building enjoyment, learning, attachment, logistics, and spatial planning before serious hostile pressure.
-
-**Reason:** Creator playtests found early surprise combat frustrating and destructive to the desired fantasy.
-
-**Implication:** First contact should be telegraphed, manageable, educational, and interesting rather than a hidden timer punishment.
-
----
-
-## 2026-09-11 — Autonomy + direct RTS control
-
-**Decision:** Colonists have autonomous work logic/priorities, while the player can issue direct orders that temporarily override autonomy.
-
-**Reason:** This is a core hybrid mechanic joining colony simulation with RTS agency.
-
----
-
-## 2026-09-11 — Physical/visible logistics
-
-**Decision:** Main resources should use visible work/haul/deposit loops instead of silently teleporting into counters.
-
-**Reason:** Playtest feedback showed that invisible processes made assignments confusing and weakened the sense that the colony was alive.
-
----
-
-## 2026-09-11 — Construction should visibly develop
-
-**Decision:** Buildings use a visible sequence such as blueprint → delivered materials → foundation/frame/shell/systems → operational structure.
-
-**Reason:** Percentage-only construction did not communicate process or satisfaction.
-
----
-
-## 2026-09-11 — Terrain is mechanical
-
-**Decision:** Terrain must affect movement, pathfinding, defense, access, and/or building strategy.
-
-**Reason:** Earlier terrain visuals suggested tactical geography but did not actually influence gameplay.
-
----
-
-## 2026-09-11 — Exposure drives pressure
-
-**Decision:** Hostile attention should primarily emerge from understandable settlement state (population, wealth, power, industry, territory, military footprint, detectable activity) rather than an unexplained fixed raid schedule.
-
-**Reason:** This makes threat a consequence of growth and supports the core product thesis.
-
----
-
-## 2026-09-11 — Production architecture may replace prototypes
-
-**Decision:** Codex may replace/refactor the single-file Canvas/browser prototype architecture.
-
-**Reason:** The prototypes are evidence and reference, not a technical constraint.
-
-**Boundary:** The final game should remain straightforward to run locally and must preserve the product behavior, not the prototype implementation.
-
----
-
-## 2026-09-11 — Originality boundary
-
-**Decision:** Commercial reference games are principle references only.
-
-**Must not copy:** protected art, sound, music, maps, races/factions, lore, exact UI assets, names, proprietary text, or other distinctive copyrighted content.
-
-**Reason:** Frontier Command must develop a coherent original identity.
+For material choices record: date/status, source observation or user goal, selected design, alternatives, reason/tradeoff, experiment or acceptance test, and result when known. Separate a planned test from its executed result. Ordinary reversible decisions do not require creator approval.

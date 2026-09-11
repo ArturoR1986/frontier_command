@@ -1,126 +1,43 @@
 # Frontier Command
 
-**Status:** active development / Codex takeover
+Guidance revision: 0.2 | Updated: 2026-09-11
+Creator: Arturo Ruiz Albarrán | Target: a complete, original, tested v1.0 game
 
-**Creator:** Arturo Ruiz Albarrán  
-**Current target:** complete, tested v1.0
+**This repository contains a research-led production brief. The early v0.1–v0.5 experiments are lessons, not the intended product or required codebase.**
 
-Frontier Command is an original real-time colony strategy game about turning wilderness into infrastructure while the world gradually notices you.
+The goal is to combine the satisfaction of resource development, base design, production and military command with survival, individual people, colony development and society planning. Classic StarCraft and RimWorld are design references to study critically, not games to reproduce or asset libraries to copy.
 
-The project combines two design pressures:
+## Codex entry point
 
-- direct RTS control, economy, spatial base building, scouting, defense, and tactical response
-- named colonists with needs, skills, autonomous work, visible everyday life, and settlement continuity
+Start with [CODEX_START_HERE.md](CODEX_START_HERE.md) and [Issue #1](https://github.com/ArturoR1986/frontier_command/issues/1).
 
-The central systemic rule is:
+The assignment is:
 
-> **Growth increases capability and exposure at the same time.**
+> Learn from the failed trials. Study the references. Extract principles. Design their interactions. Create and verify an original finished game.
 
-The central UX rule is:
+## Guidance map
 
-> **Important actions should be understandable by watching the world, not only by reading UI text.**
+- [AGENTS.md](AGENTS.md): autonomy, implementation ownership and truthful validation.
+- [Project brief](docs/PROJECT_HANDOFF.md): intent versus open design choices.
+- [Trial lessons](docs/TRIAL_LESSONS.md): user feedback, failures and implications.
+- [Reference study and synthesis](docs/REFERENCE_STUDY_AND_SYNTHESIS.md): observation questions, evidence records, synthesis method and experiment examples.
+- [v1.0 completion criteria](docs/V1_COMPLETION_CRITERIA.md): outcome-based quality and release gate.
+- [Decisions](docs/DECISIONS.md): what is fixed and what remains provisional.
+- [Archive policy](archive/README.md): optional historical evidence, not active dependencies.
+- [Changelog](CHANGELOG.md): guidance revisions and qualified trial history.
 
-## Start here
+## What is deliberately not prescribed
 
-Codex should read these files in order:
+The old resource names, building roster, four-person start, Ashwater Basin, exact camera projection, single-file browser architecture and Exposure formula are not mandatory. They can be retained, changed or rejected with evidence and coherent design judgment.
 
-1. [`AGENTS.md`](AGENTS.md) — implementation authority, autonomy rules, completion doctrine
-2. [`docs/PROJECT_HANDOFF.md`](docs/PROJECT_HANDOFF.md) — full project history, design intent, creator feedback, prototype lessons
-3. [`docs/V1_COMPLETION_CRITERIA.md`](docs/V1_COMPLETION_CRITERIA.md) — release gate / definition of done
-4. [`docs/DECISIONS.md`](docs/DECISIONS.md) — durable design/engineering decisions
-5. [`CHANGELOG.md`](CHANGELOG.md) — project evolution
+The new game must have recognizable, meaningful environments, units, buildings and abilities; reliable control; an engaging development arc; and real interaction between settlement life and tactical/economic decisions. More feature labels alone do not meet that standard.
 
-## Codex mandate
+## Working arrangement
 
-Codex owns implementation continuity from this point forward.
+Codex owns ordinary research, setup, design, coding, art implementation, tests, review and packaging. The creator supplies material creative direction or genuinely needed gameplay examples, not continuous approvals and file transfers. Necessary permission, account, spending or publication decisions remain explicit.
 
-The goal is **not** another concept prototype. The goal is a finished game.
+## Status honesty
 
-Codex should:
+At this guidance revision, the inspected `main` tree contained documents only. This revision is not a playable release and makes no claim about a separate Codex workspace. Codex should update the status and add actual launch/build commands when the new implementation exists.
 
-- choose and establish a production architecture
-- implement the complete gameplay loop
-- test continuously
-- run the game, not just compile it
-- fix defects discovered during testing
-- make normal implementation decisions autonomously
-- minimize human coordination overhead
-- ask the creator only when genuine creative direction, unavailable external action, or a specific gameplay reference is needed
-
-The creator should not be used as a copy/paste operator or continuous approval checkpoint.
-
-See `AGENTS.md` for the full operating contract.
-
-## Product north star
-
-The desired emotional progression is:
-
-```text
-landing camp
-→ functioning settlement
-→ lived-in colony
-→ capable frontier base
-→ visible regional presence
-→ increased attention and pressure
-```
-
-The opening should feel:
-
-> **This place is small, vulnerable, and mine.**
-
-The settlement should be enjoyable to build and watch before hostile pressure becomes important.
-
-## Core systems expected for v1
-
-- named colonists
-- work priorities + direct RTS overrides
-- resource gathering and physical logistics
-- storage
-- multi-stage construction
-- food production/consumption
-- hunger/rest/morale
-- power generation/consumption
-- meaningful terrain and pathfinding
-- camera zoom/pan and strong command feedback
-- settlement layout consequences
-- day/night or equivalent world rhythm
-- Exposure-driven frontier pressure
-- scouting / warnings
-- tactical combat
-- defenses
-- progression
-- save/load
-- onboarding
-- polished UI
-- audio layer if retained in final design
-- automated tests and CI
-
-The exact architecture and final system details may evolve if the changes preserve the product identity and improve the finished game.
-
-## Originality
-
-Frontier Command may study commercial games for design principles, but the final product must use original or appropriately licensed assets/content.
-
-Do not copy protected art, audio, maps, lore, factions, UI assets, names, or proprietary text from reference games.
-
-## Development principle
-
-> **Make it exist before making it great — then test it until it becomes great.**
-
-The expected loop is:
-
-```text
-build
-→ run
-→ play/test
-→ observe
-→ fix
-→ improve
-→ repeat
-```
-
-Do not let research/design become a substitute for producing and testing the game.
-
-## Completion
-
-The release is complete only when the criteria in `docs/V1_COMPLETION_CRITERIA.md` have been met and the whole game has passed final QA.
+A successful boot, a syntax check or an attractive screenshot is not final product verification. See the release gate.
