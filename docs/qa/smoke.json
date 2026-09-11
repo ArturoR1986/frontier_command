@@ -1,0 +1,27 @@
+{
+  "passed": true,
+  "checks": [
+    "boot",
+    "new game",
+    "simulation running",
+    "roster selection",
+    "pause",
+    "save",
+    "reload",
+    "load",
+    "zoom",
+    "help",
+    "placement",
+    "overlap rejection",
+    "group selection",
+    "group move",
+    "stop",
+    "pan",
+    "midgame load",
+    "corrupt save rejection",
+    "far/normal/close",
+    "1440x900",
+    "1280x720"
+  ],
+  "errors": []
+}

@@ -1,0 +1,24 @@
+name: Frontier Command checks
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: node scripts/check.mjs
+      - run: node --test
+      - run: node scripts/build.mjs
+      - run: node --expose-gc scripts/profile.mjs
+      - run: npm install --no-save playwright@1.58.2
+      - run: npx playwright install --with-deps chromium
+      - run: node scripts/smoke.mjs
+      - run: node scripts/community-playtest.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: frontier-command-build
+          path: dist/

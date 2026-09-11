@@ -1,0 +1,37 @@
+{
+  "environment": {
+    "node": "v24.19.0",
+    "platform": "win32",
+    "arch": "x64",
+    "cpu": "13th Gen Intel(R) Core(TM) i7-13650HX"
+  },
+  "fixture": {
+    "people": 16,
+    "buildings": 80,
+    "map": "64x48"
+  },
+  "simulatedSeconds": 3600,
+  "wallMs": 1538.021,
+  "tickMs": {
+    "median": 0.020499999999969987,
+    "p95": 0.37199999999995725,
+    "p99": 0.5166999999999007,
+    "max": 6.343299999999999
+  },
+  "heap": {
+    "gcAvailable": true,
+    "startBytes": 5081608,
+    "endBytes": 5579544,
+    "changeBytes": 497936
+  },
+  "final": {
+    "time": 3700,
+    "people": 16,
+    "buildings": 80,
+    "stocks": {
+      "alloy": 700,
+      "biomass": 320,
+      "food": 392
+    }
+  }
+}

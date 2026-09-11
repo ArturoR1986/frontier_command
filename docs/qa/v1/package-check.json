@@ -1,0 +1,22 @@
+{
+  "passed": true,
+  "build": {
+    "name": "frontier-command",
+    "version": "1.0.0",
+    "sourceCommit": "6814c55daa59f36786747b69caacc87fb20528ff"
+  },
+  "entry": "node serve.mjs in extracted folder",
+  "port": 4176,
+  "checks": [
+    "package-only boot",
+    "new game",
+    "four settlers",
+    "three sites",
+    "community controls",
+    "save/reload/continue",
+    "1280x720",
+    "no missing runtime files"
+  ],
+  "errors": [],
+  "missing": []
+}

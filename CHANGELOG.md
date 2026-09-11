@@ -35,3 +35,7 @@ Created the initial operating contract, start document, project history, complet
 - v0.5.1: reduced recovery file and historical syntax pass, not a verified finished hybrid game.
 
 See `docs/TRIAL_LESSONS.md` for evidence distinctions and implications.
+
+## Implementation reconciliation — 2026-09-11
+
+An independently written modular browser game and tests exist on codex/issue-1-v1. They were built against the earlier handoff before revision 0.2 was fetched. Those changes are preserved as tested implementation evidence, not automatically accepted as the corrected final design. The previous QA_REPORT.md documents the superseded checklist. FINAL_QA_REPORT.md will assess the corrected outcome-based gate after reference study, synthesis and necessary implementation changes.

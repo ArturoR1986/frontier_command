@@ -1,0 +1,55 @@
+[
+  {
+    "phase": "Opening",
+    "time": 62.75,
+    "result": "Housing, food and generation built by physical worker delivery."
+  },
+  {
+    "phase": "Economy",
+    "time": 298.5,
+    "stocks": {
+      "alloy": 151,
+      "biomass": 92,
+      "food": 108
+    },
+    "result": "Storage, production, defense and people progression operational."
+  },
+  {
+    "phase": "Warning",
+    "time": 1200,
+    "warning": {
+      "direction": "east",
+      "arrival": 1350,
+      "count": 2
+    }
+  },
+  {
+    "phase": "First contact",
+    "time": 1560,
+    "people": 5,
+    "defeated": 2
+  },
+  {
+    "phase": "Recovery",
+    "time": 1740,
+    "homeHealth": 360,
+    "people": 5
+  },
+  {
+    "phase": "Save/load",
+    "result": "Mid-game jobs, inventory, power, threat and progression restored and advanced."
+  },
+  {
+    "phase": "60-minute stability",
+    "simulatedSeconds": 3600,
+    "elapsedMs": 422.2338,
+    "people": 5,
+    "buildings": 10,
+    "stocks": {
+      "alloy": 223,
+      "biomass": 92,
+      "food": 183
+    },
+    "events": 33
+  }
+]

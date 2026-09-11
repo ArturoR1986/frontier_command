@@ -1,0 +1,221 @@
+{
+  "passed": true,
+  "realBrowser": true,
+  "simulationSpeed": "4x user control",
+  "finalTime": 1207.0999999999976,
+  "errors": [],
+  "report": [
+    {
+      "time": 0.2,
+      "people": 4,
+      "buildings": [
+        {
+          "kind": "hub",
+          "complete": true
+        }
+      ],
+      "phase": "Landing",
+      "objective": "1 / SETTLE IN — Select Tomas, then right-click a mineral cluster. Watch him gather, carry and deposit."
+    },
+    {
+      "time": 240.49999999999062,
+      "people": 4,
+      "buildings": [
+        {
+          "kind": "hub",
+          "complete": true
+        },
+        {
+          "kind": "habitat",
+          "complete": true
+        },
+        {
+          "kind": "farm",
+          "complete": true
+        },
+        {
+          "kind": "generator",
+          "complete": true
+        },
+        {
+          "kind": "depot",
+          "complete": true
+        }
+      ],
+      "phase": "Landing",
+      "objective": "5 / CAPABILITY — Build a Workshop and choose an improvement. Invite settlers when you have beds and food."
+    },
+    {
+      "time": 480.3000000000407,
+      "people": 4,
+      "buildings": [
+        {
+          "kind": "hub",
+          "complete": true
+        },
+        {
+          "kind": "habitat",
+          "complete": true
+        },
+        {
+          "kind": "farm",
+          "complete": true
+        },
+        {
+          "kind": "generator",
+          "complete": true
+        },
+        {
+          "kind": "depot",
+          "complete": true
+        },
+        {
+          "kind": "workshop",
+          "complete": true
+        },
+        {
+          "kind": "sensor",
+          "complete": true
+        },
+        {
+          "kind": "turret",
+          "complete": true
+        }
+      ],
+      "phase": "Settlement",
+      "objective": "5 / CAPABILITY — Build a Workshop and choose an improvement. Invite settlers when you have beds and food."
+    },
+    {
+      "time": 720.9000000000954,
+      "people": 5,
+      "buildings": [
+        {
+          "kind": "hub",
+          "complete": true
+        },
+        {
+          "kind": "habitat",
+          "complete": true
+        },
+        {
+          "kind": "farm",
+          "complete": true
+        },
+        {
+          "kind": "generator",
+          "complete": true
+        },
+        {
+          "kind": "depot",
+          "complete": true
+        },
+        {
+          "kind": "workshop",
+          "complete": true
+        },
+        {
+          "kind": "sensor",
+          "complete": true
+        },
+        {
+          "kind": "turret",
+          "complete": true
+        },
+        {
+          "kind": "turret",
+          "complete": true
+        }
+      ],
+      "phase": "Settlement",
+      "objective": "5 / CAPABILITY — Build a Workshop and choose an improvement. Invite settlers when you have beds and food."
+    },
+    {
+      "time": 960.7000000001499,
+      "people": 5,
+      "buildings": [
+        {
+          "kind": "hub",
+          "complete": true
+        },
+        {
+          "kind": "habitat",
+          "complete": true
+        },
+        {
+          "kind": "farm",
+          "complete": true
+        },
+        {
+          "kind": "generator",
+          "complete": true
+        },
+        {
+          "kind": "depot",
+          "complete": true
+        },
+        {
+          "kind": "workshop",
+          "complete": true
+        },
+        {
+          "kind": "sensor",
+          "complete": true
+        },
+        {
+          "kind": "turret",
+          "complete": true
+        },
+        {
+          "kind": "turret",
+          "complete": true
+        }
+      ],
+      "phase": "Settlement",
+      "objective": "6 / HORIZON — Establish a sensor and defenses. Growth raises Exposure; the first 20 minutes remain peaceful."
+    },
+    {
+      "time": 1200.3000000000038,
+      "people": 5,
+      "buildings": [
+        {
+          "kind": "hub",
+          "complete": true
+        },
+        {
+          "kind": "habitat",
+          "complete": true
+        },
+        {
+          "kind": "farm",
+          "complete": true
+        },
+        {
+          "kind": "generator",
+          "complete": true
+        },
+        {
+          "kind": "depot",
+          "complete": true
+        },
+        {
+          "kind": "workshop",
+          "complete": true
+        },
+        {
+          "kind": "sensor",
+          "complete": true
+        },
+        {
+          "kind": "turret",
+          "complete": true
+        },
+        {
+          "kind": "turret",
+          "complete": true
+        }
+      ],
+      "phase": "Warning",
+      "objective": "6 / HORIZON — Establish a sensor and defenses. Growth raises Exposure; the first 20 minutes remain peaceful."
+    }
+  ]
+}

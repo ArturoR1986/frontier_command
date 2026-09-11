@@ -1,0 +1,21 @@
+{
+  "passed": true,
+  "report": [
+    {
+      "scenario": "Care organization, provision transit, save/reload, treatment",
+      "fixture": "Controlled injury in played settlement",
+      "treated": 1,
+      "memories": [
+        {
+          "time": 282.6000000000017,
+          "text": "Cared for by Lena"
+        }
+      ]
+    },
+    {
+      "scenario": "Prepared field team, defenders, release, delivery and station restoration",
+      "time": 405.65000000001396
+    }
+  ],
+  "errors": []
+}

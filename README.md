@@ -1,43 +1,82 @@
 # Frontier Command
 
-Guidance revision: 0.2 | Updated: 2026-09-11
-Creator: Arturo Ruiz Albarrán | Target: a complete, original, tested v1.0 game
+Original real-time colony strategy in Ashwater Basin. Four named settlers build a home through visible gathering, hauling and construction. Organize homes, work, care and field duty, then restore three basin installations. Growth raises both capability and Exposure.
 
-**This repository contains a research-led production brief. The early v0.1–v0.5 experiments are lessons, not the intended product or required codebase.**
+Creator: Arturo Ruiz Albarrán. Implementation owner: Codex. Mission: [Issue #1](https://github.com/ArturoR1986/frontier_command/issues/1). See [final QA](docs/FINAL_QA_REPORT.md) for the tested v1.0 scope, source, package and evidence.
 
-The goal is to combine the satisfaction of resource development, base design, production and military command with survival, individual people, colony development and society planning. Classic StarCraft and RimWorld are design references to study critically, not games to reproduce or asset libraries to copy.
+## Run
 
-## Codex entry point
+Requires Node.js 22+ and desktop Chrome or Edge. No dependency installation is needed to play, build or run simulation tests.
 
-Start with [CODEX_START_HERE.md](CODEX_START_HERE.md) and [Issue #1](https://github.com/ArturoR1986/frontier_command/issues/1).
+```sh
+git clone https://github.com/ArturoR1986/frontier_command.git
+cd frontier_command
+node scripts/serve.mjs
+```
 
-The assignment is:
+Open **http://127.0.0.1:4173** and choose **Begin landing**. Stop the server with Ctrl+C.
 
-> Learn from the failed trials. Study the references. Extract principles. Design their interactions. Create and verify an original finished game.
+## Production build
 
-## Guidance map
+```sh
+node scripts/build.mjs
+node scripts/serve.mjs --dist
+```
 
-- [AGENTS.md](AGENTS.md): autonomy, implementation ownership and truthful validation.
-- [Project brief](docs/PROJECT_HANDOFF.md): intent versus open design choices.
-- [Trial lessons](docs/TRIAL_LESSONS.md): user feedback, failures and implications.
-- [Reference study and synthesis](docs/REFERENCE_STUDY_AND_SYNTHESIS.md): observation questions, evidence records, synthesis method and experiment examples.
-- [v1.0 completion criteria](docs/V1_COMPLETION_CRITERIA.md): outcome-based quality and release gate.
-- [Decisions](docs/DECISIONS.md): what is fixed and what remains provisional.
-- [Archive policy](archive/README.md): optional historical evidence, not active dependencies.
-- [Changelog](CHANGELOG.md): guidance revisions and qualified trial history.
+The complete game is in `dist/`. To use the downloadable build independently, extract it, open a terminal in that folder, run `node serve.mjs`, and open the local address above. Use HTTP: opening index.html through file:// does not support ES modules. Static hosting at a domain root works; subdirectory hosting requires URL adaptation.
 
-## What is deliberately not prescribed
+There are no remote assets, CDN fonts, telemetry, accounts or API keys. The local server binds to loopback. The downloaded game runs offline.
 
-The old resource names, building roster, four-person start, Ashwater Basin, exact camera projection, single-file browser architecture and Exposure formula are not mandatory. They can be retained, changed or rejected with evidence and coherent design judgment.
+## Play
 
-The new game must have recognizable, meaningful environments, units, buildings and abilities; reliable control; an engaging development arc; and real interaction between settlement life and tactical/economic decisions. More feature labels alone do not meet that standard.
+- Left-click selects; drag a box or Shift-click selects a group. The roster also selects people.
+- Right-click ground to move, resources to gather, blueprints to assist, damaged structures to repair, or hostiles to engage. X stops orders, then autonomy resumes.
+- Build Habitat → Hydro Farm → Generator. Workers physically deliver materials before construction. Leave approaches open.
+- WASD/arrows or middle/Shift-drag pan. Wheel/+/- zoom. F or Colony centers the camera. Click the minimap to navigate.
+- Space pauses; the speed button cycles 1×, 2×, 4×. Menus pause automatically.
+- Build a Workshop for tools, defense or medicine. Barracks train selected settlers. Invite people when housing and food allow it.
+- Automatic raids wait 20 simulated minutes. You can start disclosed site expeditions earlier. Afterward, sufficient Exposure creates a directional warning. Rally Kei, power defenses, and repair afterward.
 
-## Working arrangement
+Use **Help** for the full in-game reference, audio volume and guidance settings. [Controls and mechanics](docs/CONTROLS.md) explain the details.
 
-Codex owns ordinary research, setup, design, coding, art implementation, tests, review and packaging. The creator supplies material creative direction or genuinely needed gameplay examples, not continuous approvals and file transfers. Necessary permission, account, spending or publication decisions remain explicit.
+## Saves
 
-## Status honesty
+Save writes a manual browser-local slot; a separate autosave runs every two simulated minutes. Load prefers manual and falls back to autosave only when no manual slot exists. Menu → Export save creates a portable JSON file; Import save restores one. Starting a new landing first autosaves the existing colony.
 
-At this guidance revision, the inspected `main` tree contained documents only. This revision is not a playable release and makes no claim about a separate Codex workspace. Codex should update the status and add actual launch/build commands when the new implementation exists.
+Format 2 retains the map, people, needs, cargo, jobs, deliveries, stocks, research, threats and settings. Civic assignments, wounds, suspended work and restored sites persist. Format 1 migrates to civic defaults and adds accessible restoration sites without deleting existing buildings or resource nodes; local landmark terrain is cleared. Paths recalculate safely. Invalid/unsupported saves are rejected before replacing the colony. Browser data belongs to the origin/profile and is lost if site storage is cleared; export to transfer or back up.
 
-A successful boot, a syntax check or an attractive screenshot is not final product verification. See the release gate.
+## Verify
+
+```sh
+node scripts/check.mjs
+node --test
+node scripts/build.mjs
+node --expose-gc scripts/profile.mjs
+```
+
+For browser automation only:
+
+```sh
+npm install --no-save playwright@1.58.2
+npx playwright install chromium
+node scripts/smoke.mjs
+node scripts/community-playtest.mjs
+```
+
+Run tests and profile before smoke: they produce save fixtures in `artifacts/`. The smoke suite uses real interface clicks for placement, commands, pause, save/reload, camera and help. `node scripts/opening-playtest.mjs` plays 20 simulated minutes in a real browser at the normal 4× speed; allow about five minutes.
+
+An existing Playwright can be supplied via PLAYWRIGHT_PATH (absolute index.mjs path), and a Chromium executable via BROWSER_PATH. These are test settings, not game requirements.
+
+[CI](.github/workflows/ci.yml) checks syntax/whitespace, simulation tests, packaging, stress performance and browser behavior, then uploads the playable build. Native JavaScript has no separate TypeScript compilation step.
+
+## Scope and documentation
+
+Target: one 64×48 basin, 16 settlers, 80 structures, keyboard/mouse, 1280×720 or larger. Mobile, multiplayer and campaign play are outside this sandbox release. Natural deposits are finite; farms renew food and contacts may leave salvage. Frontier establishment leads to continued sandbox play.
+
+- [Architecture](docs/ARCHITECTURE.md)
+- [QA report and performance](docs/QA_REPORT.md)
+- [Release notes](docs/RELEASE_NOTES.md)
+- [Credits and rights](docs/CREDITS.md)
+- [Changelog](CHANGELOG.md)
+- [Original completion criteria](docs/V1_COMPLETION_CRITERIA.md)
+- [Agent handoff](CODEX_START_HERE.md)
