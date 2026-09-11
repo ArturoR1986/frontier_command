@@ -121,3 +121,54 @@ test('trade escrows goods, requires both storages and exchanges exactly once', (
   assert.equal(stock(r, 'f0').ore, before.ore + 8); assert.equal(other.inventory.wood, 10); assert.equal(other.inventory.ore, 32);
   assert.throws(() => command(w, 'f1', { type: 'diplomacy', other: 'f0', action: 'accept', offer: offer.id }), /no longer available/);
 });
+test('a pioneer can establish the first stockyard directly from carried supplies', () => {
+  const w = fixture(), r = w.regions[1], p = w.entities[0]; p.region = r.id; p.x = r.start.x - 2; p.y = r.start.y; p.cargo = { kind: 'wood', amount: 12 };
+  const b = makeBuilding(w, r, 'f0', 'stockpile', r.start.x, r.start.y, false); advance(w, 120);
+  assert.equal(b.complete, true); assert.equal(p.cargo, null); assert.equal(b.delivered.wood, 0);
+});
+test('injured caregivers can treat one another without resting forever', () => {
+  const w = fixture(), r = w.regions[0], people = w.entities.filter(e => e.faction === 'f0');
+  for (const e of people.slice(2)) e.hp = 0;
+  for (const e of people.slice(0, 2)) { e.hp = 30; e.wounded = true; e.rest = 95; }
+  const medicine = stock(r, 'f0').medicine; advance(w, 80);
+  for (const e of people.slice(0, 2)) { assert.ok(e.hp >= 65); assert.equal(e.wounded, false); }
+  assert.ok(stock(r, 'f0').medicine < medicine);
+});
+test('aircraft cross a local impassable ridge with a living pilot and consume fuel', () => {
+  const w = fixture(), r = w.regions[0], p = w.entities[0]; r.terrain.fill(0); r.buildings = []; r.topology++;
+  for (let y = 0; y < r.size; y++) r.terrain[y * r.size + 50] = 2; r.topology++;
+  p.x = 45; p.y = 50; const v = makeMachine(w, 'f0', r.id, 'aircraft', 46, 50); v.fuel = 50;
+  command(w, 'f0', { type: 'board', region: r.id, ids: [p.id], vehicle: v.id }); command(w, 'f0', { type: 'order', region: r.id, ids: [v.id], order: 'move', x: 60, y: 50 });
+  advance(w, 10); assert.ok(v.x > 59); assert.ok(v.fuel < 50); assert.ok(p.skills.pilot > 300);
+});
+test('craftspeople physically carry fuel to a distant empty vehicle', () => {
+  const w = fixture(), r = w.regions[0]; r.terrain.fill(0); r.topology++; r.buildings[0].inventory.fuel = 40;
+  for (const n of r.nodes) n.marked = null;
+  for (const e of w.entities.filter(e => e.faction === 'f0')) for (const k in e.priorities) e.priorities[k] = k === 'craft' ? 1 : 0;
+  const v = makeMachine(w, 'f0', r.id, 'hauler', r.start.x + 24, r.start.y + 12); advance(w, 200);
+  assert.equal(v.fuel, 30); assert.equal(stock(r, 'f0').fuel, 10);
+});
+test('ordered weapons can breach a wall without its own tile blocking the shot', () => {
+  const w = fixture(), r = w.regions[0]; r.terrain.fill(0); r.buildings = []; r.topology++;
+  const wall = makeBuilding(w, r, 'f1', 'wall', 50, 50, true), robot = makeMachine(w, 'f0', r.id, 'artillery', 37, 50);
+  w.treaties.push({ kind: 'war', parties: ['f0', 'f1'], effective: 0 });
+  command(w, 'f0', { type: 'order', region: r.id, ids: [robot.id], order: 'attack', target: wall.id });
+  const hp = wall.hp; advance(w, 10); assert.ok(wall.hp < hp);
+});
+test('attack-move holds to engage; a move order allows retreat', () => {
+  const w = fixture(), r = w.regions[0]; r.terrain.fill(0); r.buildings = []; r.topology++;
+  const robot = makeMachine(w, 'f0', r.id, 'guard', 30, 40), enemy = makeMachine(w, 'f1', r.id, 'guard', 37, 40); enemy.hp = 1000;
+  w.treaties.push({ kind: 'war', parties: ['f0', 'f1'], effective: 0 });
+  command(w, 'f0', { type: 'order', region: r.id, ids: [robot.id], order: 'attackMove', x: 50, y: 40 });
+  step(w, .1); const held = robot.x; step(w, .1); assert.equal(robot.x, held);
+  command(w, 'f0', { type: 'order', region: r.id, ids: [robot.id], order: 'move', x: 20, y: 40 }); advance(w, 2); assert.ok(robot.x < held);
+});
+test('unloaded mixed expedition cargo builds a relay before storage exists', () => {
+  const w = fixture(), r = w.regions[1], people = w.entities.filter(e => e.faction === 'f0').slice(0, 2);
+  for (const p of people) { p.region = r.id; p.x = r.start.x - 2; p.y = r.start.y; }
+  for (const [kind, amount] of Object.entries({ food: 35, wood: 30, stone: 40, ore: 35, parts: 15 })) r.drops.push({ id: `supply-${kind}`, x: r.start.x - 3, y: r.start.y, kind, amount, faction: 'f0' });
+  const relay = makeBuilding(w, r, 'f0', 'relay', r.start.x, r.start.y, false); advance(w, 600);
+  assert.equal(relay.complete, true);
+  const accounted = kind => r.drops.filter(d => d.kind === kind).reduce((s, d) => s + d.amount, 0) + stock(r, 'f0')[kind] + people.reduce((s, p) => s + (p.cargo?.kind === kind ? p.cargo.amount : 0), 0);
+  assert.equal(accounted('stone'), 5); assert.equal(accounted('ore'), 5); assert.equal(accounted('parts'), 3); assert.equal(accounted('wood'), 30);
+});

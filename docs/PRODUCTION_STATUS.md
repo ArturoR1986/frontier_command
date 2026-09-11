@@ -1,5 +1,15 @@
 # Production status
 
+## Shutdown checkpoint — 11 September 2026, 14:28 UTC
+
+The creator needs to turn off the computer. Work is safely paused, not complete. The persistent server was stopped and the world checkpointed. Verified SQLite backup: `data/backups/world-2026-09-11T14-28-46-292Z.sqlite` (`PRAGMA integrity_check`: `ok`). Live database: `data/world.sqlite`. Both remain local and ignored by Git. Simulation time is 1784.9 seconds; Ashwater Union and Stonewake Review Colony are claimed, with 136 structures across the world. Preserve this world and its access keys; additional client actions were observed but their human origin and comprehension are unverified.
+
+The checkpoint adds geographic world-map routes, excavation, home assignment, medicine recipes and resettlement controls; connected-component navigation and alternate work targets; actual aircraft traversal; attack-move engagement and wall targeting; physical vehicle fuel service; mutual care recovery; cargo conservation and first-outpost construction from mixed expedition supplies; and economically funded AI scouting, production and expeditions. These are implementation improvements, not completed product gates.
+
+Validation at shutdown: **55/55 tests passed**, including 20 current persistent-world tests and 35 legacy regressions. The latest bounded AI economy probe reached 5.48 accelerated simulation hours before its 55-second wall budget, with p95 tick 15.66 ms and maximum 30.27 ms. Three factions funded expedition orders; completed arrivals, outpost capture and military invasions remain unverified. This is neither real-time pacing evidence nor the required 24-hour soak. Two browser clients and revised map/home screens were inspected; no horizontal overflow or browser errors were found in the last checks. Build packaging still targets the older entry and must be updated.
+
+**Resume here:** start `node scripts/frontier-server.mjs` using Node v24.19.0, then open http://127.0.0.1:4180/ with the existing browser session. Continue integrated home-to-industry and expedition/battle review. Extend the economy probe to report journey arrivals and non-home ownership; fix any outpost stalls and implement/review rival military projection. Verify resettlement, cargo/death failure paths and crew recovery, then continue P2–P5 durability, conquest, realm interaction, packaging, load/soak and human play gates. Do not restart research, reset the saved colony, close Issue #1 or claim v1 completion. No work continues while this computer is off.
+
 ## Active implementation checkpoint — 11 September 2026
 
 The creator requested a final multi-video gameplay review followed by autonomous implementation through completion. [GAMEPLAY_VIDEO_REVIEW.md](GAMEPLAY_VIDEO_REVIEW.md) records three distinct videos per reference with exact inspected frames/narration and limitations. The previous research-only status below is historical. **P1 is being implemented; P1–P5 product gates remain unpassed.** Do not restart general research or return to the old small-map scope.

@@ -32,6 +32,16 @@ export function blockedGrid(r, defs, faction) {
   return grid;
 }
 const caches = new WeakMap();
+const components = new WeakMap();
+function labelsFor(grid, n) {
+  if (components.has(grid)) return components.get(grid);
+  const labels = new Uint32Array(grid.length), queue = new Int32Array(grid.length); let label = 0;
+  for (let start = 0; start < grid.length; start++) {
+    if (grid[start] || labels[start]) continue; label++; let head = 0, tail = 1; queue[0] = start; labels[start] = label;
+    while (head < tail) { const i = queue[head++], x = i % n, y = Math.floor(i / n); for (const j of [x ? i - 1 : -1, x < n - 1 ? i + 1 : -1, y ? i - n : -1, y < n - 1 ? i + n : -1]) if (j >= 0 && !grid[j] && !labels[j]) { labels[j] = label; queue[tail++] = j; } }
+  }
+  components.set(grid, labels); return labels;
+}
 function gridFor(r, defs, faction) {
   let c = caches.get(r);
   if (!c || c.version !== r.topology) { c = { version: r.topology, grids: {} }; caches.set(r, c); }
@@ -39,10 +49,23 @@ function gridFor(r, defs, faction) {
 }
 export function walkable(r, x, y, defs, faction) { return inside(r, x, y) && !gridFor(r, defs, faction)[tile(r, x, y)]; }
 // A* with binary heap and Manhattan heuristic; targets can be multi-cell footprints.
-export function route(r, from, target, defs, faction, adjacent = false) {
+export function route(r, from, target, defs, faction, adjacent = false, flying = false) {
   if (!inside(r, from.x, from.y) || !inside(r, target.x, target.y)) return null;
+  if (flying) {
+    const end = { x: Math.floor(target.x) + 0.5, y: Math.floor(target.y) + 0.5 }, count = Math.max(1, Math.ceil(distance(from, end) / 3));
+    return Array.from({ length: count }, (_, i) => ({ x: from.x + (end.x - from.x) * (i + 1) / count, y: from.y + (end.y - from.y) * (i + 1) / count }));
+  }
   const d = target.kind && defs[target.kind], w = d?.w || 1, h = d?.h || 1;
   const tx = Math.floor(target.x), ty = Math.floor(target.y), n = r.size, grid = gridFor(r, defs, faction);
+  const labels = labelsFor(grid, n), component = labels[tile(r, from.x, from.y)];
+  if (component) {
+    let connected = false;
+    for (let yy = ty - (adjacent ? 1 : 0); yy < ty + h + (adjacent ? 1 : 0); yy++) for (let xx = tx - (adjacent ? 1 : 0); xx < tx + w + (adjacent ? 1 : 0); xx++) {
+      const d = Math.max(0, tx - xx, xx - (tx + w - 1)) + Math.max(0, ty - yy, yy - (ty + h - 1));
+      if (inside(r, xx, yy) && d <= (adjacent ? 1 : 0) && labels[yy * n + xx] === component) connected = true;
+    }
+    if (!connected) return null;
+  }
   const heuristic = (x, y) => Math.max(0, tx - x, x - (tx + w - 1)) + Math.max(0, ty - y, y - (ty + h - 1));
   const start = tile(r, from.x, from.y), g = new Map([[start, 0]]), prev = new Map(), heap = [];
   function push(i, f) { let k = heap.length; heap.push([i, f]); while (k) { const p = (k - 1) >> 1; if (heap[p][1] <= f) break; heap[k] = heap[p]; k = p; } heap[k] = [i, f]; }
@@ -64,12 +87,12 @@ export function route(r, from, target, defs, faction, adjacent = false) {
   const path = []; for (let i = found; i !== start; i = prev.get(i)) path.push({ x: i % n + 0.5, y: Math.floor(i / n) + 0.5 });
   return path.reverse();
 }
-export function sight(r, a, b, defs) {
+export function sight(r, a, b, defs, targetId = null) {
   const len = Math.ceil(distance(a, b) * 2);
   for (let step = 1; step < len; step++) {
     const x = Math.floor(a.x + (b.x - a.x) * step / len), y = Math.floor(a.y + (b.y - a.y) * step / len);
     if (!inside(r, x, y) || r.terrain[tile(r, x, y)] === 2) return false;
-    if (r.buildings.some(o => o.hp > 0 && o.complete && o.kind === 'wall' && x === o.x && y === o.y)) return false;
+    if (r.buildings.some(o => o.id !== targetId && o.hp > 0 && o.complete && o.kind === 'wall' && x === o.x && y === o.y)) return false;
   }
   return true;
 }

@@ -32,7 +32,7 @@ export function newWorld(seed = 1986, size = 256) {
     for (let y = 5; y < size - 5; y += 3) for (let x = 5; x < size - 5; x += 3) {
       const h = hash(x, y, r.seed + 42); if (h > 0.15 || distance({ x, y }, r.start) < 8) continue;
       const t = r.terrain[tile(r, x, y)]; if (t === 3) continue;
-      r.nodes.push({ id: id(w), x, y, kind: t === 2 ? (h < 0.035 && r.resource === 'crystal' ? 'crystal' : h < 0.075 ? 'ore' : 'stone') : h < 0.06 ? 'food' : 'wood', amount: t === 2 ? 160 : 50, marked: null });
+      r.nodes.push({ id: id(w), x, y, kind: t === 2 ? (h < 0.035 && r.resource === 'crystal' ? 'crystal' : h < 0.075 ? 'ore' : 'stone') : h < 0.022 ? 'stone' : h < 0.045 ? 'ore' : h < 0.07 ? 'food' : 'wood', amount: t === 2 ? 160 : 50, marked: null });
     }
     // Guaranteed accessible starter resources; surrounding geography remains procedural.
     for (const [dx, dy, kind] of [[-9, 0, 'wood'], [-8, -4, 'wood'], [8, -7, 'stone'], [10, 4, 'ore'], [-7, 8, 'food'], [6, 10, 'food']]) {
@@ -63,7 +63,7 @@ function job(e, type, target, extra = {}) { e.job = { type, target: target.id, w
 function object(w, r, oid) { return r.buildings.find(b => b.id === oid) || r.nodes.find(n => n.id === oid) || r.drops.find(n => n.id === oid) || entityOf(w, oid); }
 function practice(e, skill, dt) { if (e.skills) e.skills[skill] += dt * (e.specialty === skill ? 1.4 : 1); }
 function usable(e) { return e.hp > 20 && !e.wounded; }
-function operator(w, e) { return e.type === 'vehicle' ? e.crew.map(i => entityOf(w, i)).find(p => p && usable(p)) : null; }
+function operator(w, e) { return e.type === 'vehicle' ? e.crew.map(i => entityOf(w, i)).find(p => p && usable(p) && p.hunger > 10 && p.rest > 8) : null; }
 export function machineSpeed(w, e) { if (e.type === 'person') return 1.7 * (e.wounded ? 0.45 : 1); const d = M[e.kind]; return d.speed * (e.type === 'vehicle' ? operator(w, e) && e.fuel > 0 && !e.disabled ? skillFactor(operator(w, e), 'pilot') : 0 : 1); }
 function at(r, e, target, adjacent = true) {
   const d = target.kind && B[target.kind], w = d?.w || 1, h = d?.h || 1;
@@ -72,14 +72,18 @@ function at(r, e, target, adjacent = true) {
 }
 function approach(w, r, e, target, dt, adjacent = true) {
   if (at(r, e, target, adjacent)) { e.route = []; return true; }
+  if (e.type === 'vehicle' && !machineSpeed(w, e)) { e.activity = e.disabled ? 'Disabled hull — needs repair' : e.fuel <= 0 ? 'Out of fuel — waiting for a delivery' : 'Crew needs rest, food or a fit operator'; return false; }
   if (e.retry > w.time) return false;
   if (!e.route?.length || e.routeVersion !== r.topology || e.routeTarget !== `${Math.floor(target.x)},${Math.floor(target.y)}`) {
-    e.route = route(r, e, target, B, e.faction, adjacent); e.routeVersion = r.topology; e.routeTarget = `${Math.floor(target.x)},${Math.floor(target.y)}`;
-    if (!e.route) { e.route = []; e.retry = w.time + 5; e.activity = 'Blocked route — clear an approach'; return false; }
+    e.route = route(r, e, target, B, e.faction, adjacent, M[e.kind]?.flying); e.routeVersion = r.topology; e.routeTarget = `${Math.floor(target.x)},${Math.floor(target.y)}`;
+    if (!e.route) {
+      e.blockedTargets ||= {}; if (target.id) e.blockedTargets[target.id] = { until: w.time + 60, topology: r.topology };
+      clear(e); e.retry = w.time + 1; e.activity = 'Blocked route — choosing other work'; return false;
+    }
   }
   let budget = machineSpeed(w, e) * dt;
   while (budget > 0 && e.route.length) {
-    const p = e.route[0], d = distance(e, p), step = Math.min(d, budget / (r.terrain[tile(r, e.x, e.y)] === 1 ? 1.6 : 1));
+    const p = e.route[0], d = distance(e, p), step = Math.min(d, budget / (!M[e.kind]?.flying && r.terrain[tile(r, e.x, e.y)] === 1 ? 1.6 : 1));
     if (d <= 0.01) { e.route.shift(); continue; }
     e.x += (p.x - e.x) / d * step; e.y += (p.y - e.y) / d * step; budget -= step;
     if (step === d) e.route.shift();
@@ -127,9 +131,21 @@ function supplyJob(w, r, e, b, cost) {
   job(e, 'fetch', source, { destination: b.id, kind, amount: Math.min(12, total - b.delivered[kind] - inTransit(w, b.id, kind)) }); return true;
 }
 function chooseJob(w, r, e) {
-  const bs = r.buildings.filter(b => b.hp > 0 && b.faction === e.faction), f = factionOf(w, e.faction);
-  if (e.cargo) { const destination = object(w, r, e.cargo.destination); const b = destination && destination.hp > 0 && destination.faction === e.faction ? destination : nearest(stores(r, e.faction), e); if (b) job(e, 'deliver', b); else e.activity = 'Carrying supplies — build a stockyard'; return; }
+  const available = o => !e.blockedTargets?.[o.id] || e.blockedTargets[o.id].until <= w.time || e.blockedTargets[o.id].topology !== r.topology;
+  const bs = r.buildings.filter(b => b.hp > 0 && b.faction === e.faction && available(b)), f = factionOf(w, e.faction);
+  if (e.cargo) {
+    const destination = object(w, r, e.cargo.destination);
+    let b = destination && destination.hp > 0 && destination.faction === e.faction ? destination : nearest(stores(r, e.faction), e);
+    if (!b) { b = bs.find(b => !b.complete && (B[b.kind].cost[e.cargo.kind] || 0) > b.delivered[e.cargo.kind] + inTransit(w, b.id, e.cargo.kind)); if (b) e.cargo.destination = b.id; }
+    if (b) job(e, 'deliver', b);
+    else if (bs.some(b => !b.complete)) { r.drops.push({ id: id(w), x: e.x, y: e.y, kind: e.cargo.kind, amount: e.cargo.amount, faction: e.faction }); e.cargo = null; e.activity = 'Caching surplus supplies for the new outpost'; }
+    else e.activity = 'Carrying supplies — plan a stockyard or colony hearth'; return;
+  }
   if (e.hunger < 55) { const b = nearest(stores(r, e.faction).filter(b => b.inventory.meals >= 1 || b.inventory.food >= 1), e); if (b) { job(e, 'eat', b); return; } }
+  if (!e.drafted && e.priorities.care && e.hp > 20 && e.rest >= 60) {
+    const hurt = nearest(locals(w, r).filter(p => p.type === 'person' && p.faction === e.faction && p.hp < 65 && p.id !== e.id && (p.wounded || p.job?.type === 'rest')), e);
+    if (hurt && (stock(r, e.faction).medicine >= 1 || stock(r, e.faction).food >= 2)) { job(e, 'care', hurt); return; }
+  }
   if (e.wounded || e.rest < 25) {
     const beds = bs.filter(b => b.complete && B[b.kind].beds), b = beds.find(b => b.id === e.home) || nearest(beds, e);
     if (b) { job(e, 'rest', b); return; }
@@ -157,10 +173,11 @@ function chooseJob(w, r, e) {
       if (b) { job(e, 'grow', b); return; }
     }
     if (key === 'gather') {
-      const n = nearest([...r.nodes.filter(n => n.marked === e.faction && n.amount > 0), ...r.drops.filter(n => n.amount > 0 && (!n.faction || n.faction === e.faction))].filter(n => !w.entities.some(p => p.id !== e.id && p.job?.type === 'gather' && p.job.target === n.id)), e);
+      const hasStorage = stores(r, e.faction).length > 0;
+      const n = nearest([...r.nodes.filter(n => n.marked === e.faction && n.amount > 0), ...r.drops.filter(n => n.amount > 0 && (!n.faction || n.faction === e.faction))].filter(n => available(n) && (hasStorage || bs.some(b => !b.complete && (B[b.kind].cost[n.kind] || 0) > b.delivered[n.kind] + inTransit(w, b.id, n.kind))) && !w.entities.some(p => p.id !== e.id && p.job?.type === 'gather' && p.job.target === n.id)), e, n => distance(e, n) + (f.ai && f.gatherFocus && n.kind !== f.gatherFocus ? 1000 : 0));
       if (n) { job(e, 'gather', n); return; }
     }
-    if (key === 'craft' || key === 'cook') {
+    if (key === 'craft' || key === 'cook' || key === 'care') {
       if (key === 'craft') {
         const vehicle = nearest(locals(w, r).filter(v => v.faction === e.faction && v.type === 'vehicle' && v.fuel + inTransit(w, v.id, 'fuel') < 30), e);
         const source = vehicle && nearest(stores(r, e.faction).filter(b => b.inventory.fuel > 0), e);
@@ -186,6 +203,8 @@ function chooseJob(w, r, e) {
 function doJob(w, r, e, dt) {
   const j = e.job, t = j.point || object(w, r, j.target);
   if (!t || t.hp <= 0 && !t.disabled) { clear(e); return; }
+  if (t.faction && t.faction !== e.faction) { clear(e); return; }
+  if (j.type === 'attackMove' && e.engaged) return;
   e.activity = ({ fetch: `Fetching ${j.kind}`, deliver: `Carrying ${e.cargo?.kind || 'supplies'}`, build: 'Constructing', gather: 'Gathering', grow: 'Tending crops', eat: 'Going for food', rest: 'Resting', social: 'Meeting neighbors', research: 'Studying', craft: 'Producing', fabricate: 'Fabricating', repair: 'Repairing', train: 'Operator practice', care: 'Treating wounds', move: 'Moving', attackMove: 'Advancing' })[j.type] || j.type;
   if (!approach(w, r, e, t, dt, !['move', 'attackMove'].includes(j.type))) return;
   const bonus = factionOf(w, e.faction).tech.includes('tools') ? 1.2 : 1;
@@ -196,9 +215,15 @@ function doJob(w, r, e, dt) {
     if (n) { t.inventory[j.kind] -= n; e.cargo = { kind: j.kind, amount: n, destination: dest.id }; job(e, 'deliver', dest); } else clear(e);
   } else if (j.type === 'deliver') {
     if (e.cargo) {
-      if (t.type === 'vehicle' && e.cargo.kind === 'fuel') t.fuel = Math.min(100, t.fuel + e.cargo.amount);
-      else { const target = e.cargo.destination === t.id && !t.type && (!t.complete || t.queue.length || RECIPES[t.recipe || B[t.kind].recipe]) ? t.delivered : t.inventory; target[e.cargo.kind] += e.cargo.amount; }
-      e.cargo = null;
+      let amount = e.cargo.amount;
+      if (t.type === 'vehicle' && e.cargo.kind === 'fuel') { amount = Math.min(amount, 100 - t.fuel); t.fuel += amount; }
+      else {
+        const supplying = e.cargo.destination === t.id && !t.type && (!t.complete || t.queue.length || RECIPES[t.recipe || B[t.kind].recipe]);
+        const inputs = supplying ? !t.complete ? B[t.kind].cost : t.queue.length ? M[t.queue[0].kind].cost : RECIPES[t.recipe || B[t.kind].recipe].input : null;
+        if (inputs) amount = Math.max(0, Math.min(amount, (inputs[e.cargo.kind] || 0) - t.delivered[e.cargo.kind]));
+        const target = supplying ? t.delivered : t.inventory; target[e.cargo.kind] += amount;
+      }
+      e.cargo.amount -= amount; delete e.cargo.destination; if (e.cargo.amount <= 0) e.cargo = null;
     }
     clear(e);
   } else if (j.type === 'build') {
@@ -220,7 +245,7 @@ function doJob(w, r, e, dt) {
   } else if (j.type === 'rest') {
     const enclosed = roomComfort(r, t), rate = t.kind === 'clinic' ? 0.4 : 0.23 + enclosed * 0.2;
     e.rest = Math.min(100, e.rest + dt * rate); if (!e.wounded) e.hp = Math.min(100, e.hp + dt * 0.035);
-    if (e.rest > 90 && !e.wounded) clear(e);
+    if (e.rest > 90 && (!e.wounded || e.hp > 20 && locals(w, r).some(p => p.type === 'person' && p.faction === e.faction && p.id !== e.id && p.wounded))) clear(e);
   } else if (j.type === 'social') {
     e.belonging = Math.min(100, e.belonging + dt * 0.5); e.morale = Math.min(100, e.morale + dt * 0.04);
     for (const p of locals(w, r).filter(p => p.type === 'person' && p.id !== e.id && p.job?.target === t.id)) e.friends[p.id] = Math.min(100, (e.friends[p.id] || 0) + dt * 0.01);
@@ -304,21 +329,24 @@ function hurt(w, r, target, damage, attacker) {
 function combat(w, r, dt) {
   const units = locals(w, r), turrets = r.buildings.filter(b => b.kind === 'turret' && b.complete && b.hp > 0 && b.powered);
   for (const e of [...units, ...turrets]) {
+    e.engaged = false;
     e.cooldown = Math.max(0, (e.cooldown || 0) - dt);
     if (e.type === 'person' && (!e.drafted || e.wounded) || e.type === 'vehicle' && (!operator(w, e) || e.disabled || e.fuel <= 0) || e.disabled) continue;
     const d = M[e.kind] || B[e.kind] || { range: 9, damage: 5, cycle: 2 }, origin = B[e.kind] ? footprint(e, B) : e;
     if (!d.range) continue;
     const enemies = [...units.filter(o => !o.disabled), ...r.buildings.filter(b => b.hp > 0 && b.complete && ['core', 'relay', 'turret'].includes(b.kind))].filter(o => hostile(w, e.faction, o.faction));
-    const forced = e.job?.type === 'attack' && enemies.find(o => o.id === e.job.target);
+    const requested = e.job?.type === 'attack' && object(w, r, e.job.target);
+    const forced = requested && requested.hp > 0 && hostile(w, e.faction, requested.faction) ? requested : null;
     const target = forced || nearest(enemies.filter(o => distance(origin, B[o.kind] ? footprint(o, B) : o) <= d.range), origin);
     if (!target) continue;
     const point = B[target.kind] ? footprint(target, B) : target, dist = distance(origin, point);
-    if (dist > d.range || d.minRange && dist < d.minRange || !sight(r, origin, point, B)) {
+    if (dist > d.range || d.minRange && dist < d.minRange || !sight(r, origin, point, B, target.id)) {
       if (forced && e.type) approach(w, r, e, target, dt, true); continue;
     }
     // Explicit move is a retreat order; attack-move can engage opportunistically.
     if (e.job?.type === 'move') continue;
     e.activity = `Engaging ${target.name || B[target.kind]?.name}`;
+    e.engaged = true;
     if (e.cooldown <= 0) {
       const op = e.type === 'vehicle' ? operator(w, e) : null;
       e.cooldown = (d.cycle || 2) / (op ? skillFactor(op, 'pilot') : 1);
@@ -421,15 +449,32 @@ function ai(w, f) {
   const workers = w.entities.filter(e => e.faction === f.id && e.type === 'person' && e.hp > 0);
   workers.forEach((e, i) => { if (e.drafted || e.vehicle || e.journey) return; const roles = [['build', 'gather'], ['gather', 'build'], ['grow', 'care'], ['cook', 'craft'], ['research', 'craft'], ['craft', 'pilot']][i % 6]; for (const k of ROLES) e.priorities[k] = k === roles[0] ? 1 : k === roles[1] ? 2 : k === 'gather' ? 4 : 3; });
   for (const b of r.buildings) if (b.kind === 'workshop') b.bill = 180; else if (b.kind === 'refinery') b.bill = 100;
-  for (const node of r.nodes) if (distance(node, r.start) < 45 && explored(r, f.id, node.x, node.y)) node.marked = f.id;
+  const resources = stock(r, f.id); f.gatherFocus = resources.food < 50 ? 'food' : resources.ore < 150 ? 'ore' : resources.wood < 100 ? 'wood' : resources.stone < 70 ? 'stone' : null;
+  if (f.scoutId) { const scout = entityOf(w, f.scoutId); if (!scout?.job || scout.hp < 50 || scout.hunger < 35 || scout.rest < 30) { if (scout) { scout.drafted = false; clear(scout); } f.scoutId = null; } }
+  if (!f.scoutId && resources.ore < 150 && workers.length >= 4) {
+    const scout = workers.find(e => !e.journey && !e.vehicle && e.region === r.id && !e.drafted && usable(e) && e.rest > 45 && e.hunger > 55);
+    if (scout) for (let attempt = 0; attempt < 4; attempt++) {
+      const cursor = f.surveyCursor || 0; f.surveyCursor = cursor + 1;
+      const angle = cursor % 12 / 12 * Math.PI * 2, radius = Math.min(r.size * .6, 24 + Math.floor(cursor / 12) * 12);
+      const point = { x: Math.floor(r.start.x + Math.cos(angle) * radius) + .5, y: Math.floor(r.start.y + Math.sin(angle) * radius) + .5 };
+      if (!walkable(r, point.x, point.y, B, f.id) || route(r, scout, point, B, f.id) === null) continue;
+      scout.drafted = true; job(scout, 'move', { id: null }, { point }); f.scoutId = scout.id; break;
+    }
+  }
+  for (const node of r.nodes) if (explored(r, f.id, node.x, node.y)) node.marked = f.id;
   const priorities = ['bed', 'bed', 'bed', 'bed', 'field', 'kitchen', 'table', 'workshop', 'laboratory', 'clinic', 'refinery', 'generator', 'garage', 'fabricator'];
   for (let i = 0; i < priorities.length; i++) {
     const kind = priorities[i], required = priorities.slice(0, i + 1).filter(k => k === kind).length;
     if (r.buildings.filter(b => b.faction === f.id && b.kind === kind && b.hp > 0).length >= required || B[kind].tech && !f.tech.includes(B[kind].tech)) continue;
     if (r.buildings.filter(b => !b.complete).length >= 3) break;
     let placed = false;
-    for (let yy = -12; yy < 18 && !placed; yy += 4) for (let xx = -12; xx < 18 && !placed; xx += 5) {
-      const x = r.start.x + xx, y = r.start.y + yy; if (!placement(w, r, f.id, kind, x, y)) { makeBuilding(w, r, f.id, kind, x, y); placed = true; }
+    // Bounded planning: inspect at most four sites per decision, continuing the
+    // search on the next decision instead of exhausting navigation repeatedly.
+    f.siteCursor ||= 0;
+    for (let attempt = 0; attempt < 4 && !placed; attempt++) {
+      const index = f.siteCursor++ % 64, x = r.start.x - 18 + index % 8 * 5, y = r.start.y - 18 + Math.floor(index / 8) * 5;
+      if (B[kind].demand && !r.buildings.some(g => g.kind === 'generator' && g.hp > 0 && distance(g, { x, y }) <= 22)) continue;
+      if (!placement(w, r, f.id, kind, x, y)) { makeBuilding(w, r, f.id, kind, x, y); placed = true; }
     }
     break;
   }
@@ -438,14 +483,51 @@ function ai(w, f) {
     if (kind) { pay(r, f.id, TECH[kind].cost); f.research = { kind, work: 0 }; }
   }
   const factory = r.buildings.find(b => b.kind === 'fabricator' && b.complete), garage = r.buildings.find(b => b.kind === 'garage' && b.complete);
-  if (factory && !factory.queue.length && canPay(r, f.id, M.guard.cost)) factory.queue.push({ id: id(w), kind: 'guard' });
+  if (factory && !factory.queue.length && w.entities.filter(e => e.faction === f.id && e.type === 'robot' && e.hp > 0).length < 16 && canPay(r, f.id, M.guard.cost)) factory.queue.push({ id: id(w), kind: 'guard' });
   if (garage && !garage.queue.length && !w.entities.some(e => e.faction === f.id && e.type === 'vehicle')) garage.queue.push({ id: id(w), kind: 'hauler' });
   if (!f.recruiting && workers.length < 8 && r.buildings.filter(b => b.complete).reduce((s, b) => s + (B[b.kind].beds || 0), 0) > workers.length && pay(r, f.id, { meals: 15, wood: 20 })) f.recruiting = { work: 0 };
+  aiExpedition(w, f, r, workers);
+}
+function aiExpedition(w, f, home, workers) {
+  if (!f.tech.includes('transport')) return;
+  if (f.expedition) {
+    const plan = f.expedition, journey = w.journeys.find(j => j.id === plan.journey);
+    if (!journey || journey.status === 'traveling') return;
+    const r = regionOf(w, plan.target), v = entityOf(w, plan.vehicle);
+    if (v?.crew.length) { try { command(w, f.id, { type: 'disembark', id: v.id }); } catch {} }
+    if (r.owner === f.id) { f.expedition = null; return; }
+    if (r.owner && !hostile(w, f.id, r.owner)) return;
+    if (!r.occupation) { try { command(w, f.id, { type: 'claim', region: r.id }); } catch {} }
+    const crew = workers.filter(e => e.region === r.id && !e.vehicle && !e.journey && usable(e));
+    const relay = r.buildings.find(b => b.faction === f.id && ['relay', 'core'].includes(b.kind) && b.hp > 0);
+    if (!relay && crew.length) {
+      for (const [dx, dy] of [[3, 0], [3, 5], [7, 0], [1, -5]]) {
+        try { command(w, f.id, { type: 'build', region: r.id, kind: 'relay', x: Math.floor(crew[0].x) + dx, y: Math.floor(crew[0].y) + dy }); break; } catch {}
+      }
+    }
+    for (const e of crew) { e.drafted = false; e.priorities.build = 1; e.priorities.gather = 2; }
+    return;
+  }
+  const v = w.entities.find(e => e.faction === f.id && e.type === 'vehicle' && e.kind === 'hauler' && e.region === home.id && !e.journey && !e.disabled);
+  if (!v || v.fuel < 20 || workers.length < 7) return;
+  if (v.crew.length < 2) {
+    const candidate = workers.find(e => e.region === home.id && !e.vehicle && !e.journey && usable(e) && e.id !== f.scoutId && e.rest > 40 && e.hunger > 50);
+    if (!candidate) return;
+    if (distance(candidate, v) <= 4) { try { command(w, f.id, { type: 'board', region: home.id, ids: [candidate.id], vehicle: v.id }); } catch {} }
+    else if (!candidate.drafted) { candidate.drafted = true; job(candidate, 'move', { id: null }, { point: { x: v.x - 1, y: v.y } }); }
+    return;
+  }
+  const target = w.regions.filter(r => r.realm === home.realm && !r.owner && !r.occupation).sort((a, b) => Math.abs(a.gx - home.gx) + Math.abs(a.gy - home.gy) - Math.abs(b.gx - home.gx) - Math.abs(b.gy - home.gy))[0];
+  if (!target) return;
+  const cargo = { food: 35, wood: 30, stone: 40, ore: 35, parts: 15 };
+  const q = journeyQuote(w, f.id, home.id, target.id, [v.id], cargo); if (q.error) return;
+  try { const result = command(w, f.id, { type: 'travel', region: home.id, destination: target.id, ids: [v.id], cargo }); f.expedition = { journey: result.id, target: target.id, vehicle: v.id }; } catch {}
 }
 export function step(w, dt = 0.1) {
   if (!Number.isFinite(dt) || dt <= 0 || dt > 60) throw new Error('Simulation step must be between 0 and 60 seconds.');
   const before = w.time; w.time += dt; w.revision++;
   updateJourneys(w);
+  for (const e of w.entities.filter(e => e.type === 'person' && e.vehicle && !e.journey && e.hp > 0)) { e.hunger = Math.max(0, e.hunger - dt * .025); e.rest = Math.max(0, e.rest - dt * .008); if (!e.hunger) e.hp = Math.max(1, e.hp - dt * .02); }
   for (const r of w.regions) {
     if (!r.buildings.length && !w.entities.some(e => e.region === r.id)) continue;
     power(w, r, dt);
@@ -488,6 +570,16 @@ export function command(w, faction, c) {
     if (!nodes.length) throw new Error('No visible resources selected.'); if (r.owner && r.owner !== faction) throw new Error('You do not control these resource claims.');
     for (const n of nodes) n.marked = c.clear ? null : faction; return { message: `${nodes.length} resource deposits ${c.clear ? 'released' : 'designated for gathering'}.` };
   }
+  if (c.type === 'dig') {
+    if (!r || !inside(r, c.x, c.y) || !Number.isInteger(c.x) || !Number.isInteger(c.y) || !explored(r, faction, c.x, c.y) || r.terrain[tile(r, c.x, c.y)] !== 2 || r.owner && r.owner !== faction) throw new Error('Choose visible mountain ground you can claim.');
+    let node = r.nodes.find(n => n.x === c.x && n.y === c.y && n.amount > 0);
+    if (!node) { node = { id: id(w), x: c.x, y: c.y, kind: 'stone', amount: 24, marked: faction }; r.nodes.push(node); }
+    node.marked = faction; return { message: 'Excavation marked. Miners must reach an exposed face.' };
+  }
+  if (c.type === 'resettle') {
+    if (!r || r.owner !== faction || !r.buildings.some(b => b.faction === faction && b.kind === 'core' && b.complete && b.hp > 0)) throw new Error('Build a colony hearth in territory you control first.');
+    f.home = r.id; f.subjectOf = null; note(w, faction, `${r.name} is now the colony's home.`); return { message: 'The colony has a new home. People and earned skills remain yours.' };
+  }
   if (c.type === 'order') {
     const es = own(w, faction, c.ids, c.region); if (!r || !['move', 'attackMove', 'attack', 'stop'].includes(c.order)) throw new Error('Choose a valid order.');
     if (c.order === 'attack') { const t = object(w, r, c.target); if (!t || !hostile(w, faction, t.faction)) throw new Error('Declare war and wait for notice before attacking.'); for (const e of es) { clear(e); e.drafted = true; job(e, 'attack', t); } }
@@ -495,7 +587,7 @@ export function command(w, faction, c) {
     else {
       if (!inside(r, c.x, c.y)) throw new Error('Choose a point inside this map.');
       const points = es.map((e, i) => ({ x: Math.floor(c.x) + i % 4 + 0.5, y: Math.floor(c.y) + Math.floor(i / 4) + 0.5 }));
-      if (es.some((e, i) => !walkable(r, points[i].x, points[i].y, B, faction) || route(r, e, points[i], B, faction) === null || e.type === 'vehicle' && !machineSpeed(w, e))) throw new Error('The group cannot reach that formation. Vehicles need crew, fuel and a working hull.');
+      if (es.some((e, i) => !inside(r, points[i].x, points[i].y) || !M[e.kind]?.flying && !walkable(r, points[i].x, points[i].y, B, faction) || route(r, e, points[i], B, faction, false, M[e.kind]?.flying) === null || e.type === 'vehicle' && !machineSpeed(w, e))) throw new Error('The group cannot reach that formation. Vehicles need crew, fuel and a working hull.');
       es.forEach((e, i) => { clear(e); job(e, c.order, { id: null }, { point: points[i] }); });
     }
     return { message: `${es.length} units: ${c.order}.` };
@@ -507,6 +599,14 @@ export function command(w, faction, c) {
   if (c.type === 'recruit') { if (f.recruiting) throw new Error('A newcomer is already preparing to travel.'); if (!pay(r, faction, { meals: 15, wood: 20 })) throw new Error('Welcoming a newcomer needs 15 meals and 20 wood.'); f.recruiting = { work: 0 }; return { message: 'Recruitment begun. Arrival takes 30 minutes and requires a spare bed.' }; }
   if (c.type === 'queue') { const b = r.buildings.find(b => b.id === c.id && b.faction === faction && b.complete && b.hp > 0), d = M[c.kind]; if (!b || !d || b.kind !== (d.type === 'robot' ? 'fabricator' : 'garage') || !f.tech.includes(d.tech)) throw new Error('Select the correct production building and research this design.'); if (b.queue.length >= 20) throw new Error('This queue is full.'); b.queue.push({ id: id(w), kind: c.kind }); return { message: `${d.name} queued. Materials and labor are required.` }; }
   if (c.type === 'bill') { const b = r.buildings.find(b => b.id === c.id && b.faction === faction && RECIPES[B[b.kind].recipe]); if (!b || !Number.isInteger(c.amount) || c.amount < 0 || c.amount > 10000) throw new Error('Choose a valid production target.'); b.bill = c.amount; return { message: 'Production target updated.' }; }
+  if (c.type === 'recipe') {
+    const b = r?.buildings.find(b => b.id === c.id && b.faction === faction && b.kind === 'workshop' && b.complete && b.hp > 0);
+    if (!b || !['parts', 'medicine'].includes(c.kind) || c.kind === 'medicine' && !f.tech.includes('medicine')) throw new Error('Select an available workshop recipe.');
+    for (const [kind, amount] of Object.entries(b.delivered)) if (amount) r.drops.push({ id: id(w), x: b.x - .5, y: b.y - .5, kind, amount, faction });
+    b.delivered = emptyStock(); b.work = 0; b.recipe = c.kind;
+    for (const e of w.entities) { if (e.cargo?.destination === b.id) delete e.cargo.destination; if (e.job?.destination === b.id || e.job?.target === b.id) clear(e); }
+    return { message: `Workshop now produces ${c.kind}. Reserved materials remain recoverable.` };
+  }
   if (c.type === 'cancel') {
     const b = r.buildings.find(b => b.id === c.id && b.faction === faction && b.hp > 0); if (!b || b.kind === 'core') throw new Error('Select a removable plan or structure.');
     if (c.queue) { b.queue = []; b.work = 0; } else { b.hp = 0; r.topology++; }

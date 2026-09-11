@@ -1,6 +1,7 @@
 import { STRUCTURES as B, TECH, MACHINES as M, ROLES, RESOURCES } from './catalog.js';
 import { skillLevel } from './engine.js';
 import { Renderer, ICONS } from './render.js';
+import { realmMap } from './world-map.js';
 
 const $ = id => document.getElementById(id), esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const cost = o => Object.entries(o).map(([k, n]) => `${n} ${k}`).join(' · ') || 'No materials';
@@ -72,6 +73,7 @@ function inspect() {
       for (const key of [p.specialty, 'pilot', 'care'].filter((v, i, a) => a.indexOf(v) === i)) html += `<div class="detail-line"><span>${esc(key)}</span><b>Skill ${skillLevel(p, key).toFixed(1)}</b></div>`;
       const vehicles = view.entities.filter(v => v.type === 'vehicle' && v.faction === view.faction.id && !v.disabled && !v.journey);
       html += vehicles.map(v => button(`Board ${esc(v.name)}`, 'board', `data-vehicle="${v.id}"`)).join('');
+      html += view.region.buildings.filter(b => b.faction === view.faction.id && b.complete && B[b.kind].beds).map(b => button(`Home: ${esc(B[b.kind].name)}`, 'assign-home', `data-person="${p.id}" data-home="${b.id}"`, p.home === b.id)).join('');
       html += `<p class="muted">Pilot skill improves vehicle speed and firing cycle. Training competes with ordinary work.</p>`;
       html += (p.memories || []).slice(-3).map(m => `<p class="muted">${esc(m.text)}</p>`).join('');
       if (p.cargo) html += `<p>Carrying ${p.cargo.amount} ${p.cargo.kind}</p>`;
@@ -86,6 +88,8 @@ function inspect() {
       if (!p.complete) html += meter('Construction', p.progress, d.work) + `<p class="muted">Delivered: ${cost(Object.fromEntries(Object.entries(d.cost).map(([k, n]) => [k, `${p.delivered[k] || 0}/${n}`])))}</p>`;
       if (d.storage) html += `<p class="muted">Stored here: ${cost(Object.fromEntries(Object.entries(p.inventory).filter(([, n]) => n > 0)))}</p>`;
       if (p.kind === 'laboratory' && p.complete) html += button('Choose research', 'research');
+      if (p.kind === 'workshop' && p.complete && view.faction.tech.includes('medicine')) html += `<div class="actions">${button('Make parts', 'recipe', `data-id="${p.id}" data-kind="parts"`)}${button('Make medicine', 'recipe', `data-id="${p.id}" data-kind="medicine"`)}</div>`;
+      if (p.kind === 'core' && p.complete && currentRegion !== view.faction.home) html += button('Make this our home', 'resettle');
       if (p.kind === 'core') html += button(view.faction.recruiting ? 'Newcomer preparing' : 'Welcome a newcomer', 'recruit', '', Boolean(view.faction.recruiting)) + '<p class="muted">15 meals · 20 wood · spare bed · 30 minutes</p>';
       if (['garage', 'fabricator'].includes(p.kind) && p.complete) {
         html += Object.entries(M).filter(([, d]) => (p.kind === 'garage') === (d.type === 'vehicle')).map(([kind, d]) => `<p>${button(`Build ${d.name}`, 'queue', `data-id="${p.id}" data-kind="${kind}"`, !view.faction.tech.includes(d.tech))}<small>${cost(d.cost)} · ${duration(d.work)} labor</small></p>`).join('');
@@ -97,7 +101,7 @@ function inspect() {
   } else html += `<p>${p.amount} ${p.kind} remain.</p><p class="muted">Gathering produces physical cargo. Your total rises when it reaches storage.</p>${button(p.marked ? 'Release designation' : 'Gather this resource', 'designate', `data-id="${p.id}" data-clear="${p.marked ? 1 : 0}"`)}`;
   el.innerHTML = html;
 }
-function openPanel(kind, html) { lastPanel = kind; $('panel-content').innerHTML = html; if (!$('panel').open) $('panel').showModal(); renderer.keys.clear(); }
+function openPanel(kind, html) { lastPanel = kind; $('panel-content').innerHTML = html; if (kind === 'world') { document.querySelectorAll('#panel-content .world-grid').forEach((grid, realm) => { grid.outerHTML = realmMap(view, realm, selectedWorld); }); const connection = document.createElement('p'); connection.className = 'realm-connection'; connection.textContent = 'Cinder Pass ↔ Cinder Pass Beyond · 180 km realm passage'; $('panel-content').querySelector('.split').after(connection); } if (!$('panel').open) $('panel').showModal(); renderer.keys.clear(); }
 function peoplePanel() {
   openPanel('people', `<div class="eyebrow">PEOPLE & WORK</div><h2>Choose who your people become.</h2><p>1 is highest priority; 4 is lowest; — disables a task. Needs and treatment take precedence. Drafted people and vehicle crews leave their home jobs.</p><div style="overflow:auto"><table><thead><tr><th>Person</th>${ROLES.map(k => `<th>${k}</th>`).join('')}<th>State</th></tr></thead><tbody>${view.entities.filter(e => e.type === 'person' && e.faction === view.faction.id).map(e => `<tr><td>${esc(e.name)}<small>${esc(e.specialty)}</small></td>${ROLES.map(k => `<td>${button(e.priorities[k] || '—', 'priority', `data-id="${e.id}" data-skill="${k}" data-value="${(e.priorities[k] + 1) % 5}"`)}<small>${skillLevel(e, k).toFixed(1)}</small></td>`).join('')}<td>${esc(e.vehicle ? 'Vehicle crew' : e.activity)}</td></tr>`).join('')}</tbody></table></div><p class="muted">Numbers beneath priorities show persistent skill. Practice builds skill slowly. A more experienced operator makes an expensive vehicle more useful.</p>`);
 }
@@ -133,6 +137,9 @@ document.addEventListener('click', async event => {
     if (d.action === 'board') await send({ type: 'board', ids: selectedUnits().filter(e => e.type === 'person').map(e => e.id), vehicle: d.vehicle });
     if (['refuel', 'disembark'].includes(d.action)) await send({ type: d.action, id: d.id });
     if (d.action === 'training') await send({ type: 'train', id: d.id, value: d.value === '1' });
+    if (d.action === 'assign-home') await send({ type: 'home', id: d.person, home: d.home });
+    if (d.action === 'recipe') await send({ type: 'recipe', id: d.id, kind: d.kind });
+    if (d.action === 'resettle') await send({ type: 'resettle' });
     if (d.action === 'region') { selectedWorld = d.id; worldPanel(); }
     if (d.action === 'inspect-region') { currentRegion = selectedWorld; lastTopology = -1; $('panel').close(); await refresh(true); }
     if (d.action === 'quote') { const q = await api('quote', party()); $('quote-result').textContent = q.error || `${q.km.toFixed(0)} km · ${q.speed.toFixed(1)} km/h before terrain · ${duration(q.seconds)} · capacity ${q.capacity} · journey food ${q.provisions} · fuel ${q.fuel.toFixed(1)}${q.crossRealm ? ' · crosses the realm passage' : ''}`; }
@@ -155,6 +162,7 @@ $('map').addEventListener('pointerup', async e => {
   try {
     if (start.button === 1 || start.shift) return;
     if (start.button === 2) { const target = hit(p), es = selectedUnits(); if (!es.length) { notice('Select your people or machines first.'); return; } if (target?.faction && target.faction !== view.faction.id) await send({ type: 'order', order: 'attack', ids: es.map(e => e.id), target: target.id }); else await send({ type: 'order', order: build === 'attack' ? 'attackMove' : 'move', ids: es.map(e => e.id), x: p.x, y: p.y }); build = null; return; }
+    if (build === 'dig') { await send({ type: 'dig', x: Math.floor(p.x), y: Math.floor(p.y) }); return; }
     if (build && build !== 'attack') { await send({ type: 'build', kind: build, x: Math.floor(p.x), y: Math.floor(p.y) }); return; }
     if (selectedBox && Math.hypot(selectedBox.w, selectedBox.h) > 8) { const a = renderer.world(start.x, start.y); selection = view.entities.filter(e => e.faction === view.faction.id && !e.vehicle && e.hp > 0 && e.x >= Math.min(a.x, p.x) && e.x <= Math.max(a.x, p.x) && e.y >= Math.min(a.y, p.y) && e.y <= Math.max(a.y, p.y)).map(e => e.id); }
     else { const o = hit(p); selection = o ? [o.id] : []; sound(370); } inspect();
@@ -168,13 +176,14 @@ document.addEventListener('keyup', e => renderer.keys.delete(e.key)); window.add
 $('build-category').onchange = buildMenu; $('cancel-plan').onclick = () => { build = null; buildMenu(); };
 $('zoom-out').onclick = () => renderer.zoom(1 / 1.2); $('zoom-in').onclick = () => renderer.zoom(1.2); $('center').onclick = () => view && renderer.center(view.region.start);
 $('fertility').onclick = () => { renderer.soil = !renderer.soil; $('fertility').classList.toggle('active', renderer.soil); };
+$('excavate').onclick = () => { build = 'dig'; notice('Click a visible mountain tile. Miners must reach an exposed face; excavation opens new ground.'); };
 $('home').onclick = async () => { if (!view) return; currentRegion = view.faction.home; lastTopology = -1; await refresh(true); renderer.center(view.region.start); };
 $('world-button').onclick = () => view && worldPanel(); $('people-button').onclick = () => view && peoplePanel(); $('research-button').onclick = () => view && researchPanel(); $('diplomacy-button').onclick = () => view && diplomacyPanel(); $('settings').onclick = () => view && manual(); $('close-panel').onclick = () => $('panel').close();
 document.addEventListener('input', e => { if (e.target.id === 'audio-volume') { volume = Number(e.target.value); localStorage.setItem('frontier-volume', volume); sound(); } });
-async function connected(key) { token = key; sessionStorage.setItem('frontier-key', token); localStorage.setItem('frontier-key', token); currentRegion = null; lastTopology = -1; await api('state'); $('lobby').close(); await refresh(true); const pending = sessionStorage.getItem('frontier-pending'); if (pending) { const result = await api('command', JSON.parse(pending)); sessionStorage.removeItem('frontier-pending'); notice(result.message, !result.ok); } }
+async function connected(key) { token = key; sessionStorage.setItem('frontier-key', token); if (!new URLSearchParams(location.search).has('join')) localStorage.setItem('frontier-key', token); currentRegion = null; lastTopology = -1; await api('state'); $('lobby').close(); await refresh(true); const pending = sessionStorage.getItem('frontier-pending'); if (pending) { const result = await api('command', JSON.parse(pending)); sessionStorage.removeItem('frontier-pending'); notice(result.message, !result.ok); } }
 async function lobby() { const l = await api('lobby'); $('colony-choice').innerHTML = l.colonies.map(f => `<option value="${f.id}" ${f.claimed ? 'disabled' : ''}>${esc(f.name)} · Realm ${f.realm + 1}${f.claimed ? ' · owned' : ''}</option>`).join(''); $('new-name').value = l.colonies.find(f => f.id === $('colony-choice').value)?.name || ''; $('colony-choice').onchange = () => $('new-name').value = l.colonies.find(f => f.id === $('colony-choice').value)?.name || ''; if (!$('lobby').open) $('lobby').showModal(); }
 $('join').onclick = async () => { try { const a = await api('join', { faction: $('colony-choice').value, name: $('new-name').value }); await connected(a.token); openPanel('welcome', `<div class="eyebrow">YOUR FIRST HOME</div><h2>Four people. Room to grow.</h2><p>Start with beds and food. Your people already gather nearby resources. Plans become physical jobs: fetch, carry, build. You decide how the home takes shape.</p><p><b>Next choice:</b> place beds near the hearth, or plan a fertile growing plot first. There is no opening raid countdown.</p><div class="actions">${button('Keep my access key', 'save-key')}</div><p class="muted">The field manual contains your recovery key. Close this panel to begin.</p>`); } catch (e) { $('lobby-error').textContent = e.message; } };
 $('restore').onclick = async () => { try { await connected($('restore-key').value.trim()); } catch (e) { $('lobby-error').textContent = e.message; token = ''; } };
-function frame() { try { renderer.draw(view, selection, build === 'attack' ? null : build, box); } catch (e) { console.error(e); } requestAnimationFrame(frame); } frame();
+function frame() { try { renderer.draw(view, selection, B[build] ? build : null, box); } catch (e) { console.error(e); } requestAnimationFrame(frame); } frame();
 setInterval(() => refresh(), 500);
 try { if (token) await connected(token); else await lobby(); } catch (e) { token = ''; $('lobby-error').textContent = e.message; await lobby(); }

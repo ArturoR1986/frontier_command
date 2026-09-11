@@ -1,0 +1,16 @@
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+export function realmMap(view, realm, selected) {
+  const regions = view.world.filter(r => r.realm === realm), center = r => ({ x: 62 + r.gx * 116, y: 68 + r.gy * 115 });
+  let routes = '', hills = '', towns = '';
+  for (const r of regions) {
+    const p = center(r), owner = view.factions.find(f => f.id === r.owner);
+    for (const n of regions.filter(n => n.gx === r.gx + 1 && n.gy === r.gy || n.gy === r.gy + 1 && n.gx === r.gx)) {
+      const q = center(n), km = 18 + (r.distanceKm + n.distanceKm) / 2;
+      routes += `<path d="M${p.x},${p.y} Q${(p.x + q.x) / 2 + 8},${(p.y + q.y) / 2 - 8} ${q.x},${q.y}" fill="none" stroke="#bcb78b" stroke-width="2" stroke-dasharray="4 5" opacity=".65"/><text x="${(p.x + q.x) / 2 + (p.x === q.x ? 15 : 0)}" y="${(p.y + q.y) / 2 - 8}" text-anchor="middle" fill="#ccd0a8" font-size="9">${km.toFixed(0)} km</text>`;
+    }
+    if (r.resource === 'crystal' || r.gy === 0 && r.gx === 2) for (let i = 0; i < 4; i++) hills += `<path d="M${p.x - 35 + i * 14},${p.y + 16} l12,-23 14,23z" fill="${i % 2 ? '#778173' : '#65746a'}" stroke="#9fa78a" stroke-width=".7"/>`;
+    if (r.resource === 'wood') for (let i = 0; i < 7; i++) hills += `<path d="M${p.x - 40 + i * 11},${p.y + 18 + i % 2 * 5} l6,-15 7,15z" fill="#355c45" stroke="#698063" stroke-width=".5"/>`;
+    towns += `<circle cx="${p.x}" cy="${p.y}" r="${r.id === selected ? 18 : 13}" fill="#213b30" stroke="${r.id === selected ? '#f0d08e' : owner?.color || '#bdba8c'}" stroke-width="2"/><path d="M${p.x - 6},${p.y + 4} v-8 l6,-5 6,5 v8z" fill="${owner?.color || '#c2b883'}"/>`;
+  }
+  return `<div class="realm-map"><svg viewBox="0 0 360 370" aria-label="Terrain and roads in realm ${realm + 1}" role="img"><defs><linearGradient id="sea-${realm}" x2="1" y2="1"><stop stop-color="#1b4142"/><stop offset="1" stop-color="#102c31"/></linearGradient><linearGradient id="land-${realm}" x2=".7" y2="1"><stop stop-color="#687858"/><stop offset="1" stop-color="#3e614a"/></linearGradient></defs><rect width="360" height="370" rx="9" fill="url(#sea-${realm})"/><path d="M20 44 Q66 9 121 24 L166 11 205 30 254 16 334 49 340 110 319 134 343 181 324 229 339 292 304 338 261 326 228 352 161 335 127 348 79 332 37 342 12 309 28 261 13 224 28 178 12 131z" fill="url(#land-${realm})" stroke="#9ca980" stroke-width="2"/><path d="M265 31 Q222 86 256 137 T255 233 Q233 276 256 340" fill="none" stroke="#72a79c" stroke-width="8" opacity=".8"/><path d="M265 31 Q222 86 256 137 T255 233 Q233 276 256 340" fill="none" stroke="#356d69" stroke-width="4"/>${hills}${routes}${towns}<text x="23" y="361" font-size="9" fill="#a8beb0" letter-spacing="2">${realm ? 'THE OUTER REACH' : 'THE FIRST FRONTIER'}</text></svg>${regions.map(r => { const p = center(r), owner = view.factions.find(f => f.id === r.owner); return `<button class="map-settlement ${r.id === selected ? 'selected' : ''}" style="left:${p.x / 360 * 100}%;top:${(p.y + 22) / 370 * 100}%" data-action="region" data-id="${r.id}" title="${esc(owner?.name || 'Unclaimed')} · ${r.resource} · ${r.occupation ? 'Contested' : 'Select destination'}"><b>${esc(r.name.replace(' Beyond', ''))}</b><small>${esc(owner ? owner.name : r.resource.toUpperCase())}</small></button>`; }).join('')}</div>`;
+}
