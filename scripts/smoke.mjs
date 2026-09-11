@@ -54,6 +54,11 @@ try {
   if ((await page.evaluate(() => window.frontier.snapshot().people.filter(p => p.direct && p.job?.type === 'move').length)) !== 2) throw new Error('Direct group movement failed');
   await page.keyboard.press('x');
   if ((await page.evaluate(() => window.frontier.snapshot().people.filter(p => p.direct).length))) throw new Error('Stop failed');
+  const people = await page.evaluate(() => window.frontier.snapshot().people);
+  const a = await point(Math.min(...people.map(p => p.x)) - 0.7, Math.min(...people.map(p => p.y)) - 0.7);
+  const b = await point(Math.max(...people.map(p => p.x)) + 0.7, Math.max(...people.map(p => p.y)) + 0.7);
+  await page.mouse.move(a.x, a.y); await page.mouse.down(); await page.mouse.move(b.x, b.y, { steps: 8 }); await page.mouse.up();
+  if ((await page.evaluate(() => window.frontier.selected().length)) !== 4) throw new Error('Drag group selection failed');
   const camera = await page.evaluate(() => window.frontier.view());
   await page.keyboard.down('d'); await page.waitForTimeout(200); await page.keyboard.up('d');
   if ((await page.evaluate(() => window.frontier.view().x)) <= camera.x) throw new Error('Pan failed');

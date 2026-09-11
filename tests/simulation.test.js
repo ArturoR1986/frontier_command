@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { newGame, tick, stocks, place, building, recompute, order, remove, cleanup, spawnContact, research, invite, capacity } from '../src/simulation.js';
-import { path, cell, walkable, adjacent } from '../src/world.js';
+import { path, cell, walkable, adjacent, lineOfSight } from '../src/world.js';
 import { serialize, deserialize } from '../src/save.js';
 import { BUILDINGS } from '../src/catalog.js';
 const run = (s, seconds) => { for (let i = 0; i < seconds * 4; i++) tick(s, 0.25); return s; };
@@ -59,16 +59,24 @@ test('save/load preserves in-transit materials and rejects corrupt/unsupported s
 test('direct movement overrides work and stop safely resumes autonomy', () => {
   const s = newGame(), p = s.people[0]; assert.equal(order(s, [p.id], 'move', { x: 15.5, y: 23.5 }), 1); run(s, 1); assert.ok(p.direct); assert.equal(p.job.type, 'move'); order(s, [p.id], 'stop', {}); assert.equal(p.job, null); run(s, 5); assert.ok(p.job);
 });
+test('malformed save settings and building state cannot poison the running loop', () => {
+  for (const mutate of [s => { s.settings.speed = 1e9; }, s => { s.buildings[0].growth = 'bad'; }, s => { s.buildings[0].kind = 'toString'; }, s => { s.events[0].text = {}; }, s => { s.people[0].priorities = null; }]) {
+    const envelope = JSON.parse(serialize(newGame())); mutate(envelope.state); assert.throws(() => deserialize(JSON.stringify(envelope)));
+  }
+});
 test('learning window cannot trigger raids; later exposure produces actionable warning', () => {
   const s = newGame(); add(s, 'generator', 24, 20); add(s, 'workshop', 27, 20); add(s, 'habitat', 27, 24); s.time = 1190; run(s, 5); assert.equal(s.threat.warning, null); s.time = 1200; run(s, 1); assert.ok(s.threat.warning); assert.ok(s.threat.warning.arrival > s.time + 80);
 });
 test('death drops cargo and destroyed structures release occupancy', () => {
   const s = newGame(), p = s.people[0]; p.cargo = { kind: 'alloy', amount: 8 }; p.hp = 0; const b = add(s, 'wall', 25, 21); assert.equal(walkable(s, 25, 21), false); b.hp = 0; cleanup(s); assert.equal(walkable(s, 25, 21), true); assert.equal(s.people.length, 3); assert.equal(s.drops[0].amount, 8);
 });
+test('destroyed hub can be rebuilt using physically salvaged inventory', () => {
+  const s = newGame(); s.buildings[0].hp = 0; cleanup(s); const hub = place(s, 'hub', 21, 22); assert.ok(hub); run(s, 240); assert.ok(hub.complete); assert.ok(stocks(s).alloy >= 0); assert.equal(capacity(s), 4);
+});
 test('combat, retreat and salvage cleanly resolve', () => {
   const s = newGame(); quiet(s); const kei = s.people[3]; spawnContact(s, 1); const h = s.hostiles[0]; h.x = 18; h.y = 25.5; h.hp = 20;
-  order(s, [kei.id], 'attack', h); run(s, 60); assert.equal(s.hostiles.length, 0); assert.ok(s.stats.defeated > 0 || !s.hostiles.length);
-  spawnContact(s, 1); s.hostiles[0].hp = 1; run(s, 200); assert.equal(s.hostiles.length, 0);
+  order(s, [kei.id], 'attack', h); run(s, 60); assert.equal(s.hostiles.length, 0); assert.equal(s.stats.defeated, 1); assert.ok(s.drops.some(d => d.kind === 'alloy'));
+  spawnContact(s, 1); s.hostiles[0].hp = 1; run(s, 200); assert.equal(s.hostiles.length, 0); assert.equal(s.stats.defeated, 1, 'The second contact retreated without being killed');
 });
 test('progression unlocks improvements and population respects housing', () => {
   const s = newGame(); assert.equal(invite(s), false); add(s, 'habitat', 24, 20); s.time = 125; assert.equal(capacity(s), 8); assert.equal(invite(s), true); assert.equal(s.people.length, 5);
@@ -76,4 +84,15 @@ test('progression unlocks improvements and population respects housing', () => {
 });
 test('interaction point for every multi-tile footprint is adjacent and walkable', () => {
   const s = newGame(); for (const kind of ['hub', 'habitat', 'workshop', 'farm']) { const b = { kind, x: 24, y: 20 }; const route = path(s, s.people[0], b, true); assert.ok(route); assert.ok(adjacent(route.at(-1), b)); }
+});
+test('terrain and barriers block defensive sight lines', () => {
+  const s = newGame(), a = { x: 17.5, y: 18.5 }, b = { x: 21.5, y: 18.5 };
+  for (let x = 17; x < 22; x++) s.terrain[cell(x, 18)] = 0;
+  assert.ok(lineOfSight(s, a, b)); add(s, 'wall', 19, 18); assert.equal(lineOfSight(s, a, b), false);
+  s.buildings.at(-1).hp = 0; cleanup(s); assert.ok(lineOfSight(s, a, b)); s.terrain[cell(19, 18)] = 2; assert.equal(lineOfSight(s, a, b), false);
+});
+test('several workers share a nearly depleted source without negative stock or duplication', () => {
+  const s = newGame(); quiet(s); const node = s.nodes.find(n => n.kind === 'alloy' && n.x === 16.5); node.amount = 3;
+  order(s, s.people.map(p => p.id), 'work', node); run(s, 70);
+  assert.equal(node.amount, 0); assert.equal(stocks(s).alloy, 103); assert.ok(s.people.every(p => !p.cargo && !p.job));
 });

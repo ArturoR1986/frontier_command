@@ -1,126 +1,82 @@
 # Frontier Command
 
-**Status:** active development / Codex takeover
+Original real-time colony strategy in Ashwater Basin. Four named settlers build a home through visible gathering, hauling and construction. Growth raises both capability and Exposure.
 
-**Creator:** Arturo Ruiz Albarrán  
-**Current target:** complete, tested v1.0
+Creator: Arturo Ruiz Albarrán. Implementation owner: Codex. Mission: [Issue #1](https://github.com/ArturoR1986/frontier_command/issues/1). See [QA status](docs/QA_REPORT.md) before treating a development milestone as a release.
 
-Frontier Command is an original real-time colony strategy game about turning wilderness into infrastructure while the world gradually notices you.
+## Run
 
-The project combines two design pressures:
+Requires Node.js 22+ and desktop Chrome or Edge. No dependency installation is needed to play, build or run simulation tests.
 
-- direct RTS control, economy, spatial base building, scouting, defense, and tactical response
-- named colonists with needs, skills, autonomous work, visible everyday life, and settlement continuity
-
-The central systemic rule is:
-
-> **Growth increases capability and exposure at the same time.**
-
-The central UX rule is:
-
-> **Important actions should be understandable by watching the world, not only by reading UI text.**
-
-## Start here
-
-Codex should read these files in order:
-
-1. [`AGENTS.md`](AGENTS.md) — implementation authority, autonomy rules, completion doctrine
-2. [`docs/PROJECT_HANDOFF.md`](docs/PROJECT_HANDOFF.md) — full project history, design intent, creator feedback, prototype lessons
-3. [`docs/V1_COMPLETION_CRITERIA.md`](docs/V1_COMPLETION_CRITERIA.md) — release gate / definition of done
-4. [`docs/DECISIONS.md`](docs/DECISIONS.md) — durable design/engineering decisions
-5. [`CHANGELOG.md`](CHANGELOG.md) — project evolution
-
-## Codex mandate
-
-Codex owns implementation continuity from this point forward.
-
-The goal is **not** another concept prototype. The goal is a finished game.
-
-Codex should:
-
-- choose and establish a production architecture
-- implement the complete gameplay loop
-- test continuously
-- run the game, not just compile it
-- fix defects discovered during testing
-- make normal implementation decisions autonomously
-- minimize human coordination overhead
-- ask the creator only when genuine creative direction, unavailable external action, or a specific gameplay reference is needed
-
-The creator should not be used as a copy/paste operator or continuous approval checkpoint.
-
-See `AGENTS.md` for the full operating contract.
-
-## Product north star
-
-The desired emotional progression is:
-
-```text
-landing camp
-→ functioning settlement
-→ lived-in colony
-→ capable frontier base
-→ visible regional presence
-→ increased attention and pressure
+```sh
+git clone https://github.com/ArturoR1986/frontier_command.git
+cd frontier_command
+git switch codex/issue-1-v1
+node scripts/serve.mjs
 ```
 
-The opening should feel:
+Open **http://127.0.0.1:4173** and choose **Begin landing**. Stop the server with Ctrl+C. The branch switch is needed until the implementation is merged into main.
 
-> **This place is small, vulnerable, and mine.**
+## Production build
 
-The settlement should be enjoyable to build and watch before hostile pressure becomes important.
-
-## Core systems expected for v1
-
-- named colonists
-- work priorities + direct RTS overrides
-- resource gathering and physical logistics
-- storage
-- multi-stage construction
-- food production/consumption
-- hunger/rest/morale
-- power generation/consumption
-- meaningful terrain and pathfinding
-- camera zoom/pan and strong command feedback
-- settlement layout consequences
-- day/night or equivalent world rhythm
-- Exposure-driven frontier pressure
-- scouting / warnings
-- tactical combat
-- defenses
-- progression
-- save/load
-- onboarding
-- polished UI
-- audio layer if retained in final design
-- automated tests and CI
-
-The exact architecture and final system details may evolve if the changes preserve the product identity and improve the finished game.
-
-## Originality
-
-Frontier Command may study commercial games for design principles, but the final product must use original or appropriately licensed assets/content.
-
-Do not copy protected art, audio, maps, lore, factions, UI assets, names, or proprietary text from reference games.
-
-## Development principle
-
-> **Make it exist before making it great — then test it until it becomes great.**
-
-The expected loop is:
-
-```text
-build
-→ run
-→ play/test
-→ observe
-→ fix
-→ improve
-→ repeat
+```sh
+node scripts/build.mjs
+node scripts/serve.mjs --dist
 ```
 
-Do not let research/design become a substitute for producing and testing the game.
+The complete game is in `dist/`. To use the downloadable build independently, extract it, open a terminal in that folder, run `node serve.mjs`, and open the local address above. Use HTTP: opening index.html through file:// does not support ES modules. Static hosting at a domain root works; subdirectory hosting requires URL adaptation.
 
-## Completion
+There are no remote assets, CDN fonts, telemetry, accounts or API keys. The local server binds to loopback. The downloaded game runs offline.
 
-The release is complete only when the criteria in `docs/V1_COMPLETION_CRITERIA.md` have been met and the whole game has passed final QA.
+## Play
+
+- Left-click selects; drag a box or Shift-click selects a group. The roster also selects people.
+- Right-click ground to move, resources to gather, blueprints to assist, damaged structures to repair, or hostiles to engage. X stops orders, then autonomy resumes.
+- Build Habitat → Hydro Farm → Generator. Workers physically deliver materials before construction. Leave approaches open.
+- WASD/arrows or middle/Shift-drag pan. Wheel/+/- zoom. F or Colony centers the camera. Click the minimap to navigate.
+- Space pauses; the speed button cycles 1×, 2×, 4×. Menus pause automatically.
+- Build a Workshop for tools, defense or medicine. Barracks train selected settlers. Invite people when housing and food allow it.
+- The first 20 simulated minutes are safe. Afterward, sufficient Exposure creates a directional warning. Rally Kei, power defenses, and repair afterward.
+
+Use **Help** for the full in-game reference, audio volume and guidance settings. [Controls and mechanics](docs/CONTROLS.md) explain the details.
+
+## Saves
+
+Save writes a manual browser-local slot; a separate autosave runs every two simulated minutes. Load prefers manual and falls back to autosave only when no manual slot exists. Menu → Export save creates a portable JSON file; Import save restores one. Starting a new landing first autosaves the existing colony.
+
+Format 1 retains the map, people, needs, cargo, jobs, deliveries, stocks, research, threats and settings. Paths recalculate safely. Invalid/unsupported saves are rejected before replacing the colony. Browser data belongs to the origin/profile and is lost if site storage is cleared; export to transfer or back up.
+
+## Verify
+
+```sh
+node scripts/check.mjs
+node --test
+node scripts/build.mjs
+node --expose-gc scripts/profile.mjs
+```
+
+For browser automation only:
+
+```sh
+npm install --no-save playwright@1.58.2
+npx playwright install chromium
+node scripts/smoke.mjs
+```
+
+Run tests and profile before smoke: they produce save fixtures in `artifacts/`. The smoke suite uses real interface clicks for placement, commands, pause, save/reload, camera and help. `node scripts/opening-playtest.mjs` plays 20 simulated minutes in a real browser at the normal 4× speed; allow about five minutes.
+
+An existing Playwright can be supplied via PLAYWRIGHT_PATH (absolute index.mjs path), and a Chromium executable via BROWSER_PATH. These are test settings, not game requirements.
+
+[CI](.github/workflows/ci.yml) checks syntax/whitespace, simulation tests, packaging, stress performance and browser behavior, then uploads the playable build. Native JavaScript has no separate TypeScript compilation step.
+
+## Scope and documentation
+
+Target: one 64×48 basin, 16 settlers, 80 structures, keyboard/mouse, 1280×720 or larger. Mobile, multiplayer and campaign play are outside this sandbox release. Natural deposits are finite; farms renew food and contacts may leave salvage. Frontier establishment leads to continued sandbox play.
+
+- [Architecture](docs/ARCHITECTURE.md)
+- [QA report and performance](docs/QA_REPORT.md)
+- [Release notes](docs/RELEASE_NOTES.md)
+- [Credits and rights](docs/CREDITS.md)
+- [Changelog](CHANGELOG.md)
+- [Original completion criteria](docs/V1_COMPLETION_CRITERIA.md)
+- [Agent handoff](CODEX_START_HERE.md)

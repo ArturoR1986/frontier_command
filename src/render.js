@@ -96,25 +96,14 @@ export function render(canvas, minimap, s, ui) {
   if (canvas.width !== Math.round(rect.width * dpr) || canvas.height !== Math.round(rect.height * dpr)) { canvas.width = Math.round(rect.width * dpr); canvas.height = Math.round(rect.height * dpr); }
   c.setTransform(dpr, 0, 0, dpr, 0, 0); c.fillStyle = '#263634'; c.fillRect(0, 0, v.width, v.height);
   c.translate(v.width / 2, v.height / 2); c.scale(v.scale, v.scale); c.translate(-v.x, -v.y); c.lineWidth = 0.035;
-  const min = screenToWorld(v, 0, 0), max = screenToWorld(v, v.width, v.height);
-  for (let y = Math.max(0, Math.floor(min.y)); y < Math.min(HEIGHT, max.y + 1); y++) for (let x = Math.max(0, Math.floor(min.x)); x < Math.min(WIDTH, max.x + 1); x++) {
-    const i = cell(x, y), t = s.terrain[i], hash = (Math.imul(x + 17, y + 113) % 19) / 19;
-    c.fillStyle = s.explored[i] ? colors[t] : '#303e3b'; c.fillRect(x, y, 1.02, 1.02);
-    if (!s.explored[i]) { c.fillStyle = '#8993810b'; c.fillRect(x + 0.1, y + 0.1, 0.02, 0.02); continue; }
-    c.fillStyle = hash > 0.5 ? '#e7e4b306' : '#101e2208'; c.beginPath(); c.ellipse(x + 0.5, y + 0.5, 0.65, 0.43, hash * 3, 0, 7); c.fill();
-    if (t === 1) {
-      c.fillStyle = '#80915b35'; c.beginPath(); c.ellipse(x + 0.5, y + 0.5, 0.58, 0.46, hash * 2, 0, 7); c.fill();
-      c.strokeStyle = '#95a67177'; c.lineWidth = 0.018;
-      for (let i = 0; i < 4; i++) { const px = x + 0.12 + (i * 0.31 + hash) % 0.75, py = y + 0.2 + (i * 0.23) % 0.65; c.beginPath(); c.moveTo(px, py); c.lineTo(px - 0.035, py - 0.12); c.moveTo(px, py); c.lineTo(px + 0.07, py - 0.07); c.stroke(); }
-    }
-    if (t === 2) { c.fillStyle = '#293a3b66'; c.fillRect(x + 0.12, y + 0.2, 0.9, 0.8); polygon(c, [[x + 0.04, y + 0.4], [x + 0.3, y + 0.05], [x + 0.77, y + 0.14], [x + 0.98, y + 0.65], [x + 0.65, y + 0.93], [x + 0.1, y + 0.87]], '#828474', '#667365'); polygon(c, [[x + 0.04, y + 0.4], [x + 0.3, y + 0.05], [x + 0.77, y + 0.14], [x + 0.55, y + 0.46]], '#969583'); }
-    else { c.fillStyle = t === 1 ? '#afbb7950' : '#b8bd9440'; c.fillRect(x + hash * 0.7, y + 0.3, 0.06, 0.035); c.fillRect(x + 0.6, y + hash, 0.035, 0.035); }
-    if (s.trails[i] > 2) {
-      const opacity = Math.min(0.28, s.trails[i] / 180); c.strokeStyle = `rgba(174,157,121,${opacity})`; c.lineWidth = 0.25;
-      for (const [dx, dy] of [[1, 0], [0, 1]]) if (x + dx < WIDTH && y + dy < HEIGHT && s.trails[cell(x + dx, y + dy)] > 2) { c.beginPath(); c.moveTo(x + 0.5, y + 0.5); c.lineTo(x + dx + 0.5, y + dy + 0.5); c.stroke(); }
-      c.lineWidth = 0.035;
-    }
+  if (!ui.terrainCache || ui.terrainCache.state !== s || ui.terrainCache.epoch !== Math.floor(s.time / 2)) {
+    const surface = ui.terrainCache?.surface || new OffscreenCanvas(WIDTH * 32, HEIGHT * 32);
+    const ground = surface.getContext('2d');
+    ground.setTransform(32, 0, 0, 32, 0, 0); ground.lineWidth = 0.035;
+    drawTerrain(ground, s);
+    ui.terrainCache = { surface, state: s, epoch: Math.floor(s.time / 2) };
   }
+  c.drawImage(ui.terrainCache.surface, 0, 0, WIDTH, HEIGHT);
   for (const n of s.nodes) {
     if (n.amount <= 0 || !s.explored[cell(n.x, n.y)]) continue;
     if (n.kind === 'alloy') { polygon(c, [[n.x - 0.35, n.y + 0.18], [n.x - 0.21, n.y - 0.25], [n.x + 0.08, n.y - 0.4], [n.x + 0.3, n.y + 0.16]], '#acc0b6', '#334b4b'); polygon(c, [[n.x + 0.07, n.y + 0.24], [n.x + 0.16, n.y - 0.12], [n.x + 0.4, n.y - 0.04], [n.x + 0.41, n.y + 0.26]], '#8da9ad', '#405959'); }
@@ -163,4 +152,26 @@ function drawMinimap(canvas, s, view) {
   for (const p of s.people) { c.fillStyle = '#e4e8d1'; c.fillRect(p.x * sx - 1, p.y * sy - 1, 2, 2); }
   for (const h of s.hostiles) { c.fillStyle = '#e98e76'; c.fillRect(h.x * sx - 1, h.y * sy - 1, 3, 3); }
   const min = screenToWorld(view, 0, 0), max = screenToWorld(view, view.width, view.height); c.strokeStyle = '#e9d39b'; c.lineWidth = 1; c.strokeRect(min.x * sx, min.y * sy, (max.x - min.x) * sx, (max.y - min.y) * sy);
+}
+
+function drawTerrain(c, s) {
+  const min = { x: 0, y: 0 }, max = { x: WIDTH, y: HEIGHT };
+  for (let y = Math.max(0, Math.floor(min.y)); y < Math.min(HEIGHT, max.y + 1); y++) for (let x = Math.max(0, Math.floor(min.x)); x < Math.min(WIDTH, max.x + 1); x++) {
+    const i = cell(x, y), t = s.terrain[i], hash = (Math.imul(x + 17, y + 113) % 19) / 19;
+    c.fillStyle = s.explored[i] ? colors[t] : '#303e3b'; c.fillRect(x, y, 1.02, 1.02);
+    if (!s.explored[i]) { c.fillStyle = '#8993810b'; c.fillRect(x + 0.1, y + 0.1, 0.02, 0.02); continue; }
+    c.fillStyle = hash > 0.5 ? '#e7e4b306' : '#101e2208'; c.beginPath(); c.ellipse(x + 0.5, y + 0.5, 0.65, 0.43, hash * 3, 0, 7); c.fill();
+    if (t === 1) {
+      c.fillStyle = '#80915b35'; c.beginPath(); c.ellipse(x + 0.5, y + 0.5, 0.58, 0.46, hash * 2, 0, 7); c.fill();
+      c.strokeStyle = '#95a67177'; c.lineWidth = 0.018;
+      for (let i = 0; i < 4; i++) { const px = x + 0.12 + (i * 0.31 + hash) % 0.75, py = y + 0.2 + (i * 0.23) % 0.65; c.beginPath(); c.moveTo(px, py); c.lineTo(px - 0.035, py - 0.12); c.moveTo(px, py); c.lineTo(px + 0.07, py - 0.07); c.stroke(); }
+    }
+    if (t === 2) { c.fillStyle = '#293a3b66'; c.fillRect(x + 0.12, y + 0.2, 0.9, 0.8); polygon(c, [[x + 0.04, y + 0.4], [x + 0.3, y + 0.05], [x + 0.77, y + 0.14], [x + 0.98, y + 0.65], [x + 0.65, y + 0.93], [x + 0.1, y + 0.87]], '#828474', '#667365'); polygon(c, [[x + 0.04, y + 0.4], [x + 0.3, y + 0.05], [x + 0.77, y + 0.14], [x + 0.55, y + 0.46]], '#969583'); }
+    else { c.fillStyle = t === 1 ? '#afbb7950' : '#b8bd9440'; c.fillRect(x + hash * 0.7, y + 0.3, 0.06, 0.035); c.fillRect(x + 0.6, y + hash, 0.035, 0.035); }
+    if (s.trails[i] > 2) {
+      const opacity = Math.min(0.28, s.trails[i] / 180); c.strokeStyle = `rgba(174,157,121,${opacity})`; c.lineWidth = 0.25;
+      for (const [dx, dy] of [[1, 0], [0, 1]]) if (x + dx < WIDTH && y + dy < HEIGHT && s.trails[cell(x + dx, y + dy)] > 2) { c.beginPath(); c.moveTo(x + 0.5, y + 0.5); c.lineTo(x + dx + 0.5, y + dy + 0.5); c.stroke(); }
+      c.lineWidth = 0.035;
+    }
+  }
 }

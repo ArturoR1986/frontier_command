@@ -1,6 +1,6 @@
 // All sound is synthesized locally; no downloaded or third-party recordings.
 export class AudioLayer {
-  constructor() { this.context = null; this.volume = 0.25; this.lastAmbient = 0; }
+  constructor() { this.context = null; this.volume = 0.25; this.lastAmbient = 0; this.lastShot = 0; }
   start() { if (!this.context) this.context = new AudioContext(); if (this.context.state === 'suspended') this.context.resume(); }
   tone(kind = 'click') {
     if (!this.context || !this.volume) return;
@@ -12,6 +12,7 @@ export class AudioLayer {
     o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime + duration);
   }
   update(s) {
+    if (s.effects.some(e => e.type === 'shot') && s.time - this.lastShot > 0.3) { this.lastShot = s.time; this.tone('shot'); }
     if (s.time - this.lastAmbient > 9) { this.lastAmbient = s.time; this.tone(s.people.some(p => ['build', 'gather'].includes(p.job?.type)) ? 'work' : 'ambient'); }
   }
 }

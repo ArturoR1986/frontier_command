@@ -2,7 +2,7 @@ export const VERSION = 1;
 export const WIDTH = 64;
 export const HEIGHT = 48;
 export const BUILDINGS = {
-  hub: { name: 'Command Hub', w: 3, h: 3, alloy: 0, biomass: 0, hp: 900, power: 8, demand: 0, color: '#d8b66b', description: 'Landing anchor, storage and four emergency bunks.' },
+  hub: { name: 'Command Hub', w: 3, h: 3, alloy: 60, biomass: 30, hp: 900, power: 8, demand: 0, color: '#d8b66b', description: 'Landing anchor, storage and four emergency bunks. Can be rebuilt if lost.' },
   depot: { name: 'Storage Depot', w: 2, h: 2, alloy: 18, biomass: 8, hp: 300, demand: 0, color: '#b59f81', description: 'A physical drop-off point. Shorter walks mean more work.' },
   habitat: { name: 'Habitat', w: 3, h: 2, alloy: 24, biomass: 12, hp: 360, demand: 2, color: '#a3c3bf', description: 'Four beds. Powered homes restore rest and health faster.' },
   farm: { name: 'Hydro Farm', w: 3, h: 2, alloy: 20, biomass: 10, hp: 240, demand: 3, color: '#91b87b', description: 'Tend crops, harvest and haul food. Fertile soil grows faster.' },

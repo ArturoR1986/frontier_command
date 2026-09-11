@@ -1,5 +1,15 @@
 # Frontier Command — Changelog
 
+## 1.0.0 — 2026-09-11 — Ashwater Basin
+
+- Completed the integrated colony sandbox, progression, threat and recovery loops.
+- Added portable playable packaging, local run/build instructions, controls, architecture and rights documentation.
+- Hardened save validation and retained camera preferences; invalid saves cannot replace the current colony.
+- Added Command Hub reconstruction from salvaged inventory, group movement spacing and idle-person separation.
+- Cached terrain rendering after measured frame-pacing failures; retained dynamic units, structures and work feedback.
+- Verified the real-browser 20-minute opening and deterministic 60-minute gameplay/recovery sessions.
+- Added final QA evidence and release notes. See the QA report for exact release checks and CI revision.
+
 ## 0.6.0 — 2026-09-11 — Integrated production development milestone
 
 - Added modular deterministic simulation, terrain routing and physical storage/cargo.

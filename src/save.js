@@ -13,7 +13,7 @@ export function deserialize(text) {
   const number = v => typeof v === 'number' && Number.isFinite(v);
   const point = p => number(p.x) && number(p.y) && p.x >= 0 && p.y >= 0 && p.x < WIDTH && p.y < HEIGHT;
   const assert = (condition, message) => { if (!condition) throw new Error(`Invalid save: ${message}. Your current colony is unchanged.`); };
-  assert(s && s.version === VERSION && number(s.time) && s.time >= 0 && Number.isInteger(s.nextId) && Number.isInteger(s.rng), 'header');
+  assert(s && s.version === VERSION && number(s.time) && s.time >= 0 && Number.isInteger(s.nextId) && Number.isInteger(s.rng) && Number.isInteger(s.seed) && typeof s.ended === 'boolean', 'header');
   assert(Array.isArray(s.terrain) && s.terrain.length === WIDTH * HEIGHT && s.terrain.every(t => [0, 1, 2, 3].includes(t)), 'terrain');
   assert(Array.isArray(s.trails) && s.trails.length === WIDTH * HEIGHT && s.trails.every(number), 'trails');
   assert(Array.isArray(s.explored) && s.explored.length === WIDTH * HEIGHT && s.explored.every(v => typeof v === 'boolean'), 'exploration');
@@ -23,12 +23,14 @@ export function deserialize(text) {
     assert(Number.isInteger(o.id) && o.id > 0 && o.id < s.nextId && !ids.has(o.id) && point(o), 'entity identity/position'); ids.add(o.id);
   }
   for (const b of s.buildings) {
-    assert(BUILDINGS[b.kind] && number(b.hp) && number(b.progress) && typeof b.complete === 'boolean', 'building');
+    assert(Object.hasOwn(BUILDINGS, b.kind) && number(b.hp) && b.hp >= 0 && number(b.progress) && b.progress >= 0 && b.progress <= 100 && typeof b.complete === 'boolean' && Number.isInteger(b.x) && Number.isInteger(b.y), 'building');
+    for (const k of ['growth', 'tended', 'cooldown']) assert(number(b[k]), 'building work state');
+    assert(b.growth >= 0 && b.growth <= 100 && b.tended >= 0, 'crop state');
     assert(b.x + BUILDINGS[b.kind].w <= WIDTH && b.y + BUILDINGS[b.kind].h <= HEIGHT, 'footprint');
-    for (const k of ['alloy', 'biomass', 'food']) assert(number(b.inventory?.[k]) && b.inventory[k] >= 0 && number(b.delivered?.[k]) && b.delivered[k] >= 0, 'inventory');
+    for (const k of ['alloy', 'biomass', 'food']) assert(Number.isInteger(b.inventory?.[k]) && b.inventory[k] >= 0 && Number.isInteger(b.delivered?.[k]) && b.delivered[k] >= 0 && b.delivered[k] <= (BUILDINGS[b.kind][k] || 0), 'inventory');
   }
   for (const p of s.people) {
-    assert(typeof p.name === 'string' && p.name.length < 100 && typeof p.activity === 'string', 'person');
+    assert(['name', 'role', 'trait', 'color', 'activity'].every(k => typeof p[k] === 'string' && p[k].length < 200) && typeof p.direct === 'boolean' && typeof p.ranger === 'boolean', 'person');
     for (const k of ['hp', 'hunger', 'rest', 'morale', 'cooldown', 'wait']) assert(number(p[k]), 'needs');
     assert(p.priorities && ['build', 'haul', 'mine', 'grow'].every(k => Number.isInteger(p.priorities[k]) && p.priorities[k] >= 0 && p.priorities[k] <= 4), 'priorities');
     if (p.cargo) assert(['alloy', 'biomass', 'food'].includes(p.cargo.kind) && number(p.cargo.amount) && p.cargo.amount > 0 && p.cargo.amount <= 16, 'cargo');
@@ -36,11 +38,13 @@ export function deserialize(text) {
     p.route = []; p.routeVersion = -1;
   }
   for (const n of [...s.nodes, ...s.drops]) assert(['alloy', 'biomass', 'food'].includes(n.kind) && number(n.amount) && n.amount >= 0, 'resource');
-  for (const h of s.hostiles) { assert(number(h.hp) && number(h.age) && number(h.cooldown), 'hostile'); h.route = []; h.routeVersion = -1; }
+  for (const h of s.hostiles) { assert(['hp', 'maxHp', 'age', 'cooldown', 'hunger', 'rest'].every(k => number(h[k])) && h.maxHp > 0 && typeof h.retreat === 'boolean', 'hostile'); h.route = []; h.routeVersion = -1; }
   assert(s.threat && number(s.threat.exposure) && number(s.threat.encounters) && number(s.threat.nextContact), 'threat');
-  if (s.threat.warning) assert(number(s.threat.warning.arrival) && ['east', 'west'].includes(s.threat.warning.direction) && Number.isInteger(s.threat.warning.count), 'warning');
+  if (s.threat.warning) assert(number(s.threat.warning.arrival) && ['east', 'west'].includes(s.threat.warning.direction) && Number.isInteger(s.threat.warning.count) && s.threat.warning.count >= 1 && s.threat.warning.count <= 6, 'warning');
   assert(s.stats && ['gathered', 'delivered', 'built', 'defeated', 'arrivals'].every(k => number(s.stats[k])), 'statistics');
-  assert(s.settings && number(s.settings.volume) && s.settings.volume >= 0 && s.settings.volume <= 1, 'settings');
+  assert(s.settings && number(s.settings.volume) && s.settings.volume >= 0 && s.settings.volume <= 1 && [1, 2, 4].includes(s.settings.speed) && typeof s.settings.guide === 'boolean', 'settings');
+  if (s.settings.camera) { const c = s.settings.camera; assert(number(c.x) && number(c.y) && c.x >= 0 && c.x <= WIDTH && c.y >= 0 && c.y <= HEIGHT && number(c.scale) && c.scale >= 12 && c.scale <= 70, 'camera'); }
+  assert(s.events.length <= 60 && s.events.every(e => number(e.time) && typeof e.text === 'string' && e.text.length < 1000 && ['info', 'warning', 'danger', 'success'].includes(e.tone)), 'journal');
   assert(s.upgrades.every(k => ['tools', 'armor', 'medicine'].includes(k)), 'upgrades');
   if (s.research) assert(['tools', 'armor', 'medicine'].includes(s.research.kind) && number(s.research.progress), 'research');
   s.effects = []; s.topology = (s.topology || 0) + 1;

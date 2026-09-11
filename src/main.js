@@ -26,6 +26,7 @@ window.addEventListener('unhandledrejection', e => fatal(e.reason));
 function notify(text) { $('notice').textContent = text; clearTimeout(notify.timer); notify.timer = setTimeout(() => { $('notice').textContent = ''; }, 5500); }
 function fit() { ui.view.x = 22.5; ui.view.y = 24; ui.view.scale = Math.min(36, Math.max(22, ui.view.width / 29)); }
 function save(slot = 'frontier-command-save') {
+  state.settings.camera = { x: ui.view.x, y: ui.view.y, scale: ui.view.scale };
   try { localStorage.setItem(slot, serialize(state)); if (slot.endsWith('-save')) notify('Colony saved on this browser. Export a file for a portable backup.'); return true; }
   catch (e) { notify(`Could not save: ${e.message}. Use Export save.`); return false; }
 }
@@ -33,7 +34,7 @@ function load() {
   try { const text = localStorage.getItem('frontier-command-save') || localStorage.getItem('frontier-command-auto'); if (!text) throw new Error('No saved colony on this browser.'); applySave(deserialize(text)); notify('Colony restored. Work and cargo continue.'); }
   catch (e) { notify(e.message); }
 }
-function applySave(next) { state = next; started = true; paused = false; accumulator = 0; ui.selected = []; ui.build = null; audio.volume = state.settings.volume; $('welcome').close(); fit(); updateUI(); }
+function applySave(next) { state = next; started = true; paused = false; accumulator = 0; ui.selected = []; cancelBuild(); audio.volume = state.settings.volume; $('welcome').close(); fit(); if (state.settings.camera) Object.assign(ui.view, state.settings.camera); updateUI(); }
 function select(id, add = false) { ui.selected = add ? ui.selected.includes(id) ? ui.selected.filter(i => i !== id) : [...ui.selected, id] : [id]; audio.tone(); updateUI(); }
 function hit(p) {
   return state.people.find(q => distance(p, q) < 0.65) || state.hostiles.find(q => distance(p, q) < 0.65) || occupied(state, Math.floor(p.x), Math.floor(p.y)) || state.nodes.find(q => q.amount > 0 && distance(p, q) < 0.65);
@@ -48,6 +49,7 @@ function updateUI() {
   $('speed').textContent = `${state.settings.speed}×`;
   $('objective').textContent = objective(state); $('objective').hidden = !state.settings.guide;
   $('population').textContent = `${state.people.length} / ${capacity(state)}`;
+  $('buildings').querySelector('[data-build="hub"]').hidden = state.buildings.some(b => b.kind === 'hub');
   markup('roster', state.people.map(p => `<button class="person ${ui.selected.includes(p.id) ? 'active' : ''}" data-person="${p.id}"><span class="portrait" style="--person:${escape(p.color)}">${p.ranger ? '♟' : '♙'}</span><span><strong>${escape(p.name)}</strong> <span class="role">${escape(p.role)}</span><span class="task">${escape(p.activity)}</span></span><span class="hp">${Math.ceil(p.hp)}♥</span></button>`).join(''));
   $('invite').disabled = state.people.length >= Math.min(16, capacity(state)) || stock.food < 20 || state.time < 120;
   const selected = [...state.people, ...state.buildings, ...state.nodes, ...state.hostiles].find(p => ui.selected.includes(p.id));
@@ -70,7 +72,7 @@ function updateUI() {
   const latest = state.events.at(-1);
   if (latest && latest.text !== lastEvent) { lastEvent = latest.text; if (['warning', 'danger'].includes(latest.tone)) audio.tone('warning'); }
 }
-$('buildings').innerHTML = Object.entries(BUILDINGS).filter(([k]) => k !== 'hub').map(([k, b]) => `<button data-build="${k}" title="${b.name}: ${b.description}"><span class="glyph">${GLYPHS[k]}</span>${b.name.replace('Storage ', '').replace('Sentry ', '').replace('Hydro ', '').replace('Sensor Mast', 'Sensor')}<small>${b.alloy} A · ${b.biomass} B</small></button>`).join('');
+$('buildings').innerHTML = Object.entries(BUILDINGS).map(([k, b]) => `<button data-build="${k}" title="${b.name}: ${b.description}"><span class="glyph">${GLYPHS[k]}</span>${b.name.replace('Storage ', '').replace('Sentry ', '').replace('Hydro ', '').replace('Sensor Mast', 'Sensor')}<small>${b.alloy} A · ${b.biomass} B</small></button>`).join('');
 $('buildings').addEventListener('click', e => { const b = e.target.closest('[data-build]'); if (!b) return; ui.build = b.dataset.build; for (const button of $('buildings').children) button.classList.toggle('active', button === b); notify(`${BUILDINGS[ui.build].name}: click valid ground to place. Escape cancels.`); audio.tone(); });
 $('roster').addEventListener('click', e => { const b = e.target.closest('[data-person]'); if (b) select(Number(b.dataset.person), e.shiftKey); });
 $('inspection').addEventListener('click', e => {
@@ -139,13 +141,14 @@ $('speed').onclick = () => { state.settings.speed = state.settings.speed === 1 ?
 $('save').onclick = () => save(); $('load').onclick = load;
 $('invite').onclick = () => { notify(invite(state) ? 'A new settler has joined the colony.' : 'Needs a spare bed, 20 food and an established landing (2 minutes).'); updateUI(); };
 $('menu').onclick = () => { $('resume').hidden = !started; $('welcome').showModal(); };
-$('new-game').onclick = () => { if (started && !save('frontier-command-auto')) return; state = newGame(Number($('seed').value) >>> 0); started = true; paused = false; accumulator = 0; ui.selected = []; cancelBuild(); $('welcome').close(); audio.start(); fit(); updateUI(); };
+$('new-game').onclick = () => { if (started && !save('frontier-command-auto')) return; state = newGame(Number($('seed').value) >>> 0); started = true; paused = false; accumulator = 0; ui.selected = []; cancelBuild(); $('welcome').close(); audio.volume = state.settings.volume; audio.start(); fit(); updateUI(); };
 $('continue').onclick = load; $('resume').onclick = () => $('welcome').close();
+$('welcome').addEventListener('cancel', e => { if (!started) e.preventDefault(); });
 $('help').onclick = () => { $('volume').value = state.settings.volume; $('guide').checked = state.settings.guide; $('help-dialog').showModal(); };
 $('close-help').onclick = () => $('help-dialog').close();
 $('volume').oninput = e => { state.settings.volume = Number(e.target.value); audio.volume = state.settings.volume; audio.start(); audio.tone(); };
 $('guide').onchange = e => { state.settings.guide = e.target.checked; updateUI(); };
-$('export').onclick = () => { const url = URL.createObjectURL(new Blob([serialize(state)], { type: 'application/json' })); const a = document.createElement('a'); a.href = url; a.download = `frontier-command-day-${Math.floor(state.time / 600) + 1}.json`; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); };
+$('export').onclick = () => { state.settings.camera = { x: ui.view.x, y: ui.view.y, scale: ui.view.scale }; const url = URL.createObjectURL(new Blob([serialize(state)], { type: 'application/json' })); const a = document.createElement('a'); a.href = url; a.download = `frontier-command-day-${Math.floor(state.time / 600) + 1}.json`; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); };
 $('import').onclick = () => $('save-file').click();
 $('save-file').onchange = async e => { try { const file = e.target.files[0]; if (file) applySave(deserialize(await file.text())); } catch (error) { notify(error.message); } e.target.value = ''; };
 document.addEventListener('visibilitychange', () => { last = performance.now(); accumulator = 0; });

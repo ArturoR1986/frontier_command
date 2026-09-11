@@ -48,8 +48,11 @@ export function order(s, ids, type, target) {
     clear(p);
     if (type === 'stop') { p.wait = 3; accepted++; continue; }
     if (type === 'move') {
-      if (!inside(target.x, target.y) || !walkable(s, target.x, target.y) || path(s, p, target) === null) continue;
-      job(p, 'move', { id: 0 }, { point: { x: Math.floor(target.x) + 0.5, y: Math.floor(target.y) + 0.5 } });
+      const offsets = [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, 1], [1, -1], [-1, -1], [2, 0], [-2, 0], [0, 2], [0, -2], [2, 1], [-2, 1], [1, 2]];
+      const offset = offsets[accepted % offsets.length];
+      const point = { x: Math.floor(target.x) + 0.5 + offset[0], y: Math.floor(target.y) + 0.5 + offset[1] };
+      if (!inside(point.x, point.y) || !walkable(s, point.x, point.y) || path(s, p, point) === null) continue;
+      job(p, 'move', { id: 0 }, { point });
     } else {
       const t = find(s, target.id);
       if (!t || path(s, p, t, true) === null) continue;
@@ -67,7 +70,7 @@ export function order(s, ids, type, target) {
 }
 export function placement(s, kind, x, y) {
   const d = BUILDINGS[kind];
-  if (!d || kind === 'hub') return 'Choose a buildable structure.';
+  if (!d || kind === 'hub' && s.buildings.some(b => b.kind === 'hub')) return 'Choose a buildable structure. Only one Command Hub can operate.';
   for (let yy = y; yy < y + d.h; yy++) for (let xx = x; xx < x + d.w; xx++) {
     if (!inside(xx, yy)) return 'Outside the basin.';
     if (!s.explored[cell(xx, yy)]) return 'Scout this ground first.';
@@ -78,7 +81,7 @@ export function placement(s, kind, x, y) {
   const candidate = { id: -1, kind, x, y, hp: d.hp };
   s.buildings.push(candidate);
   const reachable = s.people.some(p => path(s, p, candidate, true) !== null);
-  const escape = s.people.every(p => depots(s).some(b => path(s, p, b, true) !== null));
+  const escape = !depots(s).length || s.people.every(p => depots(s).some(b => path(s, p, b, true) !== null));
   s.buildings.pop();
   if (!reachable || !escape) return 'Would seal access. Leave a walkable approach.';
   return '';
@@ -185,7 +188,8 @@ function chooseConstruction(s, p, only = null) {
     if (path(s, p, b, true) === null) continue;
     for (const kind of ['alloy', 'biomass']) {
       const need = deliveryNeed(s, b, kind);
-      const depot = need > 0 && accessible(s, p, depots(s).filter(d => d.inventory[kind] > 0));
+      const sources = [...depots(s).filter(d => d.inventory[kind] > 0), ...s.drops.filter(d => d.kind === kind && d.amount > 0)];
+      const depot = need > 0 && accessible(s, p, sources);
       // Both targets are reachable from the worker's connected walkable region.
       // A depot center is inside its blocked footprint and is not a route origin.
       if (depot) { job(p, 'fetch', depot, { destination: b.id, kind }); return true; }
@@ -279,8 +283,11 @@ function work(s, p, dt) {
     case 'fetch': {
       const dest = s.buildings.find(b => b.id === j.destination && !b.complete);
       if (dest && !p.cargo) {
-        const amount = Math.min(8, target.inventory[j.kind], deliveryNeed(s, dest, j.kind));
-        if (amount > 0) { target.inventory[j.kind] -= amount; p.cargo = { kind: j.kind, amount, destination: dest.id }; }
+        const amount = Math.min(8, target.inventory ? target.inventory[j.kind] : target.amount, deliveryNeed(s, dest, j.kind));
+        if (amount > 0) {
+          if (target.inventory) target.inventory[j.kind] -= amount; else target.amount -= amount;
+          p.cargo = { kind: j.kind, amount, destination: dest.id };
+        }
       }
       clear(p); break;
     }
@@ -408,6 +415,14 @@ export function tick(s, dt = 0.1) {
   if (s.research && s.buildings.some(b => b.kind === 'workshop' && b.powered)) {
     s.research.progress += dt;
     if (s.research.progress >= 90) { s.upgrades.push(s.research.kind); event(s, `${UPGRADES[s.research.kind].name} ready.`, 'success'); s.research = null; }
+  }
+  // Idle settlers make room for each other without becoming navigation blockers.
+  for (let i = 0; i < s.people.length; i++) for (let j = i + 1; j < s.people.length; j++) {
+    const p = s.people[i], q = s.people[j];
+    if (p.job || q.job || distance(p, q) >= 0.45) continue;
+    const length = distance(p, q), dx = length > 0.01 ? (p.x - q.x) / length : 1, dy = length > 0.01 ? (p.y - q.y) / length : 0;
+    const x = p.x + dx * dt, y = p.y + dy * dt;
+    if (walkable(s, x, y)) { p.x = x; p.y = y; }
   }
   threats(s, dt);
   for (const e of s.effects) e.life -= dt;
