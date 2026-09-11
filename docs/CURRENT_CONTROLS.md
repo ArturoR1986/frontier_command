@@ -13,3 +13,5 @@
 The small frame/network readout is development instrumentation, not a claim that the game has passed its full load or long-session gates.
 
 Parked vehicles in safe areas release hungry or exhausted crews for food and rest. The people and their skills persist; assign rested operators before departure. AI expeditions reserve sufficient supplies before boarding crews.
+
+A departing party may load its own previously unloaded supplies as well as storage goods. This permits withdrawal before building a depot. Other colonies' loose goods are not available for loading. Stop a local server by entering quit and Enter in its console, or Ctrl+C in an interactive terminal.

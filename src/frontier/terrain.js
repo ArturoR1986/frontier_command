@@ -48,6 +48,14 @@ function gridFor(r, defs, faction) {
   return c.grids[faction] ||= blockedGrid(r, defs, faction);
 }
 export function walkable(r, x, y, defs, faction) { return inside(r, x, y) && !gridFor(r, defs, faction)[tile(r, x, y)]; }
+// Fast connectivity query for job selection. Reuses topology component labels;
+// a large number of unreachable jobs must not keep crowding out useful work.
+export function reachable(r,from,target,defs,faction,adjacent=true){
+  if(!inside(r,from.x,from.y)||!inside(r,target.x,target.y))return false;
+  const labels=labelsFor(gridFor(r,defs,faction),r.size),component=labels[tile(r,from.x,from.y)];if(!component)return true;
+  const d=defs[target.kind],w=d?.w||1,h=d?.h||1,x=Math.floor(target.x),y=Math.floor(target.y),edge=adjacent?1:0;
+  for(let yy=y-edge;yy<y+h+edge;yy++)for(let xx=x-edge;xx<x+w+edge;xx++)if(inside(r,xx,yy)&&Math.max(0,x-xx,xx-(x+w-1))+Math.max(0,y-yy,yy-(y+h-1))<=edge&&labels[yy*r.size+xx]===component)return true;return false;
+}
 // A* with binary heap and Manhattan heuristic; targets can be multi-cell footprints.
 export function route(r, from, target, defs, faction, adjacent = false, flying = false) {
   if (!inside(r, from.x, from.y) || !inside(r, target.x, target.y)) return null;

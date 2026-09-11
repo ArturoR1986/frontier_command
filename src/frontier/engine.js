@@ -1,5 +1,6 @@
 import { SCHEMA, RESOURCES, ROLES, STRUCTURES as B, TECH, MACHINES as M, RECIPES, COLORS, emptyStock } from './catalog.js';
-import { generateTerrain, hash, tile, inside, distance, footprint, walkable, route, sight } from './terrain.js';
+import { excavationPath } from './excavation.js';
+import { generateTerrain, hash, tile, inside, distance, footprint, walkable, route, reachable, sight } from './terrain.js';
 
 export const id = w => `e${w.nextId++}`;
 export const factionOf = (w, id) => w.factions.find(f => f.id === id);
@@ -127,19 +128,19 @@ function inTransit(w, target, kind) { return w.entities.reduce((s, e) => s + (e.
 function needsInputs(w, b, cost) { return Object.entries(cost).find(([k, n]) => n > (b.delivered[k] || 0) + inTransit(w, b.id, k)); }
 function supplyJob(w, r, e, b, cost) {
   const missing = needsInputs(w, b, cost); if (!missing) return false;
-  const [kind, total] = missing, source = nearest(stores(r, e.faction).filter(s => s.inventory[kind] > 0), e);
+  const [kind, total] = missing, source = nearest(stores(r, e.faction).filter(s => s.inventory[kind] > 0 && (!e.blockedTargets?.[s.id] || e.blockedTargets[s.id].until <= w.time || e.blockedTargets[s.id].topology !== r.topology)), e);
   if (!source) { b.active = `Needs ${kind}`; return false; }
   job(e, 'fetch', source, { destination: b.id, kind, amount: Math.min(12, total - b.delivered[kind] - inTransit(w, b.id, kind)) }); return true;
 }
 function chooseJob(w, r, e) {
   const enemies=locals(w,r).filter(o=>hostile(w,e.faction,o.faction)&&!o.disabled&&(o.type==='robot'||o.type==='vehicle'&&operator(w,o)||o.type==='person'&&o.drafted));
   const safe=o=>!enemies.some(enemy=>distance(o,enemy)<(M[enemy.kind]?.range||9)+3);
-  const available = o => safe(o) && (!e.blockedTargets?.[o.id] || e.blockedTargets[o.id].until <= w.time || e.blockedTargets[o.id].topology !== r.topology);
-  const bs = r.buildings.filter(b => b.hp > 0 && b.faction === e.faction && available(b)), f = factionOf(w, e.faction);
+  const available = o => safe(o) && reachable(r,e,o,B,e.faction) && (!e.blockedTargets?.[o.id] || e.blockedTargets[o.id].until <= w.time || e.blockedTargets[o.id].topology !== r.topology);
+  const bs = r.buildings.filter(b => b.hp > 0 && b.faction === e.faction && (!b.complete || !['wall','floor','door'].includes(b.kind) || b.hp < B[b.kind].hp) && available(b)), f = factionOf(w, e.faction);
   if (e.hunger < 45 && e.cargo && ['food','meals'].includes(e.cargo.kind) && e.cargo.amount >= 1) { e.cargo.amount--; e.hunger=Math.min(100,e.hunger+(e.cargo.kind==='meals'?45:28));if(!e.cargo.amount)e.cargo=null;e.activity='Eating a carried ration';return; }
   if (e.cargo) {
     const destination = object(w, r, e.cargo.destination);
-    let b = destination && destination.hp > 0 && destination.faction === e.faction && safe(destination) ? destination : nearest(stores(r, e.faction).filter(safe), e);
+    let b = destination && destination.hp > 0 && destination.faction === e.faction && available(destination) ? destination : nearest(stores(r, e.faction).filter(available), e);
     if (!b) { b = bs.find(b => !b.complete && (B[b.kind].cost[e.cargo.kind] || 0) > b.delivered[e.cargo.kind] + inTransit(w, b.id, e.cargo.kind)); if (b) e.cargo.destination = b.id; }
     if (b) job(e, 'deliver', b);
     else if (bs.some(b => !b.complete)) { r.drops.push({ id: id(w), x: e.x, y: e.y, kind: e.cargo.kind, amount: e.cargo.amount, faction: e.faction }); e.cargo = null; e.activity = 'Caching surplus supplies for the new outpost'; }
@@ -177,17 +178,17 @@ function chooseJob(w, r, e) {
       if (damaged && stock(r, e.faction).parts >= 1) { job(e, 'repair', damaged); return; }
     }
     if (key === 'grow') {
-      const b = nearest(bs.filter(b => b.complete && b.kind === 'field' && (b.tending < 1 || b.growth >= 1) && !w.entities.some(p => p.id !== e.id && p.job?.type === 'grow' && p.job.target === b.id)), e);
+      const b = nearest(bs.filter(b => b.complete && b.kind === 'field' && (b.tending < .4 || b.growth >= 1) && !w.entities.some(p => p.id !== e.id && p.job?.type === 'grow' && p.job.target === b.id)), e);
       if (b) { job(e, 'grow', b); return; }
     }
     if (key === 'gather') {
       const hasStorage = stores(r, e.faction).length > 0;
-      const n = nearest([...r.nodes.filter(n => n.marked === e.faction && n.amount > 0), ...r.drops.filter(n => n.amount > 0 && (!n.faction || n.faction === e.faction))].filter(n => available(n) && (hasStorage || bs.some(b => !b.complete && (B[b.kind].cost[n.kind] || 0) > b.delivered[n.kind] + inTransit(w, b.id, n.kind))) && !w.entities.some(p => p.id !== e.id && p.job?.type === 'gather' && p.job.target === n.id)), e, n => distance(e, n) + (f.ai && f.gatherFocus && n.kind !== f.gatherFocus ? 1000 : 0));
+      const n = nearest([...r.nodes.filter(n => n.marked === e.faction && n.amount > 0), ...r.drops.filter(n => n.amount > 0 && (!n.faction || n.faction === e.faction))].filter(n => available(n) && (hasStorage || bs.some(b => !b.complete && (B[b.kind].cost[n.kind] || 0) > b.delivered[n.kind] + inTransit(w, b.id, n.kind))) && !w.entities.some(p => p.id !== e.id && p.job?.type === 'gather' && p.job.target === n.id)), e, n => distance(e, n) + (f.ai && n.excavation === f.id ? -2000 : f.ai && f.gatherFocus && n.kind !== f.gatherFocus ? 1000 : 0));
       if (n) { job(e, 'gather', n); return; }
     }
     if (key === 'craft' || key === 'cook' || key === 'care') {
       if (key === 'craft') {
-        const vehicle = nearest(locals(w, r).filter(v => v.faction === e.faction && v.type === 'vehicle' && v.fuel + inTransit(w, v.id, 'fuel') < 30 && safe(v)), e);
+        const vehicle = nearest(locals(w, r).filter(v => v.faction === e.faction && v.type === 'vehicle' && v.fuel < 30 && v.fuel + inTransit(w, v.id, 'fuel') < 30 && safe(v)), e);
         const source = vehicle && nearest(stores(r, e.faction).filter(b => b.inventory.fuel > 0), e);
         if (source) { job(e, 'fetch', source, { destination: vehicle.id, kind: 'fuel', amount: Math.min(12, 30 - vehicle.fuel - inTransit(w, vehicle.id, 'fuel')) }); return; }
       }
@@ -400,6 +401,8 @@ export function worldRoute(w, fromId, toId, flying = false) {
   const legs = []; for (let rid = to.id; rid !== from.id;) { const leg = prev.get(rid); legs.push({ ...leg, to: rid }); rid = leg.from; }
   return { legs: legs.reverse(), km: legs.reduce((s, l) => s + l.km, 0), effort: dist.get(to.id), crossRealm: from.realm !== to.realm };
 }
+function travelStock(r,faction){const total=stock(r,faction);for(const drop of r.drops)if(drop.faction===faction&&drop.amount>0)total[drop.kind]+=drop.amount;return total;}
+function payTravel(r,faction,cost){for(const [kind,amount]of Object.entries(cost)){let left=amount;for(const source of stores(r,faction)){const n=Math.min(source.inventory[kind]||0,left);source.inventory[kind]-=n;left-=n;}for(const drop of r.drops)if(drop.faction===faction&&drop.kind===kind){const n=Math.min(drop.amount,left);drop.amount-=n;left-=n;}}r.drops=r.drops.filter(d=>d.amount>0);}
 export function journeyQuote(w, faction, region, destination, ids, cargo = {}) {
   const r = regionOf(w, region), members = ids.map(i => entityOf(w, i));
   if (!r || !members.length || new Set(ids).size !== ids.length || members.some(e => !e || e.faction !== faction || e.region !== region || e.journey || e.vehicle || e.hp <= 0 || e.disabled)) return { error: 'Select living, available members of this colony in the departure region.' };
@@ -413,7 +416,7 @@ export function journeyQuote(w, faction, region, destination, ids, cargo = {}) {
   const seconds = Math.ceil(path.effort / speed * 3600), people = members.filter(e => e.type === 'person').length + vehicles.reduce((s, v) => s + v.crew.length, 0), provisions = Math.max(1, Math.ceil(seconds / 3600 * people * 0.3));
   if (weight > capacity) return { error: `Cargo weighs ${weight}; this party can carry ${capacity}.` };
   if (vehicles.some(v => v.fuel < path.km * M[v.kind].fuel)) return { error: 'Refuel the vehicles before departure.', km: path.km };
-  if (!canPay(r, faction, { ...cargo, food: (cargo.food || 0) + provisions })) return { error: `Need selected cargo plus ${provisions} food for the journey.` };
+  if (!Object.entries({ ...cargo, food: (cargo.food || 0) + provisions }).every(([k,n])=>travelStock(r,faction)[k]>=n)) return { error: `Need selected cargo plus ${provisions} food for the journey.` };
   return { ...path, speed, seconds, capacity, provisions, people, fuel: vehicles.reduce((s, v) => s + path.km * M[v.kind].fuel, 0) };
 }
 function startJourney(w, faction, c) {
@@ -421,7 +424,7 @@ function startJourney(w, faction, c) {
   const r = regionOf(w, c.region), cargo = { ...emptyStock(), ...c.cargo }, jid = id(w), members = c.ids.map(i => entityOf(w, i)), all = [...members];
   for (const v of members.filter(e => e.type === 'vehicle')) { v.fuel -= q.km * M[v.kind].fuel; for (const pid of v.crew) all.push(entityOf(w, pid)); }
   // Carried goods are retained on their original entity; only explicit cargo is withdrawn.
-  pay(r, faction, { ...cargo, food: cargo.food + q.provisions });
+  payTravel(r, faction, { ...cargo, food: cargo.food + q.provisions });
   for (const e of all) { e.journey = jid; e.region = null; clear(e); e.activity = `Traveling to ${regionOf(w, c.destination).name}`; }
   const j = { id: jid, faction, from: c.region, to: c.destination, members: all.map(e => e.id), roots: c.ids, cargo, departed: w.time, arrival: w.time + q.seconds, quote: q, status: 'traveling' };
   w.journeys.push(j); note(w, faction, `Expedition departed for ${regionOf(w, c.destination).name}. ${q.km.toFixed(0)} km; ${(q.seconds / 3600).toFixed(1)} hours.`); return j.id;
@@ -429,7 +432,7 @@ function startJourney(w, faction, c) {
 function updateJourneys(w) {
   for (const j of w.journeys.filter(j => j.status === 'traveling' && j.arrival <= w.time)) {
     const r = regionOf(w, j.to), anchor = stores(r, j.faction)[0], point = anchor ? freeEdge(r, anchor, j.faction) : { x: 2.5, y: r.size / 2 + 0.5 };
-    for (const eid of j.members) { const e = entityOf(w, eid); e.journey = null; e.region = r.id; Object.assign(e, point || r.start); clear(e); if (e.type === 'person') remember(w, e, `Reached ${r.name}`, 4); }
+    for (const eid of j.members) { const e = entityOf(w, eid); e.journey = null; e.region = r.id; Object.assign(e, point || r.start); clear(e); e.activity=e.vehicle?'Aboard vehicle':e.type==='person'?'Arrived — ready for work':e.type==='vehicle'?'Arrived — awaiting orders':'Standing guard'; if (e.type === 'person') remember(w, e, `Reached ${r.name}`, 4); }
     for (const [kind, amount] of Object.entries(j.cargo)) if (amount) { if (anchor) anchor.inventory[kind] += amount; else r.drops.push({ id: id(w), ...point, kind, amount, faction: j.faction }); }
     j.cargo = emptyStock(); j.status = 'arrived'; j.arrived = w.time; note(w, j.faction, `Expedition arrived in ${r.name}. Supplies are ${anchor ? 'in local storage' : 'unloaded at the entry point'}.`);
   }
@@ -476,7 +479,17 @@ function ai(w, f) {
     }
   }
   for (const node of r.nodes) if (explored(r, f.id, node.x, node.y)) node.marked = f.id;
-  const priorities = ['bed', 'bed', 'bed', 'bed', 'field', 'kitchen', 'table', 'workshop', 'laboratory', 'clinic', 'refinery', 'generator', 'garage', 'fabricator'];
+  if(resources.ore<150 && Math.floor(w.time/120)!==f.lastMiningSurvey){
+    f.lastMiningSurvey=Math.floor(w.time/120);const miner=workers.find(e=>e.region===r.id&&!e.vehicle&&!e.journey&&usable(e));
+    if(miner && !r.nodes.some(n=>n.excavation===f.id&&n.amount>0)){
+      const deposits=r.nodes.filter(n=>n.kind==='ore'&&n.amount>0&&explored(r,f.id,n.x,n.y)).sort((a,b)=>distance(miner,a)-distance(miner,b));
+      const hasAccess=deposits.some(n=>reachable(r,miner,n,B,f.id));
+      if(!hasAccess && deposits.length){const path=excavationPath(r,miner,deposits[0],B,f.id),face=path[0];
+        if(face && explored(r,f.id,face.x,face.y))try{command(w,f.id,{type:'dig',region:r.id,...face});r.nodes.find(n=>n.x===face.x&&n.y===face.y&&n.amount>0).excavation=f.id;}catch{}
+      }
+    }
+  }
+  const priorities = ['bed', 'bed', 'bed', 'bed', 'field', 'kitchen', 'table', 'workshop', 'laboratory', 'clinic', 'refinery', 'generator', 'garage', 'fabricator', ...(workers.length>=8?['bed','bed','bed','bed']:[])];
   for (let i = 0; i < priorities.length; i++) {
     const kind = priorities[i], required = priorities.slice(0, i + 1).filter(k => k === kind).length;
     if (r.buildings.filter(b => b.faction === f.id && b.kind === kind && b.hp > 0).length >= required || B[kind].tech && !f.tech.includes(B[kind].tech)) continue;
@@ -498,12 +511,12 @@ function ai(w, f) {
   }
   const factory = r.buildings.find(b => b.kind === 'fabricator' && b.complete), garage = r.buildings.find(b => b.kind === 'garage' && b.complete);
   if (factory && !factory.queue.length && w.entities.filter(e => e.faction === f.id && e.type === 'robot' && e.hp > 0).length < 16 && canPay(r, f.id, M.guard.cost)) factory.queue.push({ id: id(w), kind: 'guard' });
-  if (garage && !garage.queue.length && !w.entities.some(e => e.faction === f.id && e.type === 'vehicle')) garage.queue.push({ id: id(w), kind: 'hauler' });
-  if (!f.recruiting && workers.length < 8 && r.buildings.filter(b => b.complete).reduce((s, b) => s + (B[b.kind].beds || 0), 0) > workers.length && pay(r, f.id, { meals: 15, wood: 20 })) f.recruiting = { work: 0 };
+  if (garage && !garage.queue.length && !w.entities.some(e => e.faction === f.id && e.type === 'vehicle' && e.hp>0 && !e.disabled)) garage.queue.push({ id: id(w), kind: 'hauler' });
+  if (!f.recruiting && workers.length < 12 && r.buildings.filter(b => b.complete).reduce((s, b) => s + (B[b.kind].beds || 0), 0) > workers.length && pay(r, f.id, { meals: 15, wood: 20 })) f.recruiting = { work: 0 };
   aiOutposts(w,f,workers); aiExpedition(w, f, r, workers);
 }
 function aiOutposts(w,f,workers) {
-  for(const r of w.regions.filter(r=>r.owner===f.id&&r.id!==f.home)){
+  for(const r of w.regions.filter(r=>(r.owner===f.id||r.occupation?.faction===f.id)&&r.id!==f.home)){
     const people=workers.filter(e=>e.region===r.id&&!e.vehicle&&!e.journey),seat=stores(r,f.id)[0];if(!people.length||!seat)continue;
     for(const n of r.nodes)if(n.amount>0&&explored(r,f.id,n.x,n.y)&&['food','wood'].includes(n.kind))n.marked=f.id;
     for(const e of people){e.drafted=false;e.priorities.build=1;e.priorities.grow=2;e.priorities.gather=3;}
@@ -518,9 +531,25 @@ function aiExpedition(w, f, home, workers) {
     const plan = f.expedition, journey = w.journeys.find(j => j.id === plan.journey);
     if (!journey || journey.status === 'traveling') return;
     const r = regionOf(w, plan.target), v = entityOf(w, plan.vehicle);
-    if (v?.crew.length) { try { command(w, f.id, { type: 'disembark', id: v.id }); } catch {} }
-    if (r.owner === f.id) { f.expedition = null; return; }
-    if (r.owner && !hostile(w, f.id, r.owner)) return;
+    if(!v||v.disabled||v.hp<=0){f.expedition=null;return;}
+    if(plan.phase==='homebound'){if(v.crew.length)try{command(w,f.id,{type:'disembark',id:v.id});}catch{}f.expedition=null;f.nextExpedition=w.time+600;return;}
+    if (v.crew.length && !['return','withdraw'].includes(plan.phase)) { try { command(w, f.id, { type: 'disembark', id: v.id }); } catch {} }
+    if (r.owner === f.id) {
+      plan.phase='return';const residents=workers.filter(e=>e.region===r.id&&!e.vehicle&&!e.journey&&usable(e));
+      if(!v.crew.length){if(residents.length<2)return;const pilot=residents.find(e=>e.hunger>55&&e.rest>45);if(!pilot)return;
+        if(distance(pilot,v)<=4)try{command(w,f.id,{type:'board',region:r.id,ids:[pilot.id],vehicle:v.id});}catch{}
+        else if(pilot.job?.type!=='move'){pilot.drafted=true;job(pilot,'move',{id:null},{point:{x:v.x,y:v.y}});}return;
+      }
+      const cargo={ore:Math.max(0,Math.min(100,Math.floor(stock(r,f.id).ore)-35))},quote=journeyQuote(w,f.id,r.id,home.id,[v.id],cargo);
+      if(!quote.error)try{const result=command(w,f.id,{type:'travel',region:r.id,destination:home.id,ids:[v.id],cargo});plan.phase='homebound';plan.journey=result.id;note(w,f.id,'The carrier is returning home. A pioneer remains to tend the supplied outpost.');}catch{}
+      return;
+    }
+    const competitor=r.owner||r.occupation?.faction;
+    if(competitor && competitor!==f.id && !hostile(w,f.id,competitor)){
+      plan.phase='withdraw';const people=workers.filter(e=>e.region===r.id&&!e.vehicle&&!e.journey&&usable(e));
+      if(people.length){const pilot=people.find(e=>e.hunger>40&&e.rest>30);if(!pilot)return;if(distance(pilot,v)<=4)try{command(w,f.id,{type:'board',region:r.id,ids:[pilot.id],vehicle:v.id});}catch{}else if(pilot.job?.type!=='move'){const point=freeEdge(r,v,f.id);if(point){pilot.drafted=true;job(pilot,'move',{id:null},{point});}}return;}
+      const q=journeyQuote(w,f.id,r.id,home.id,[v.id],{});if(!q.error)try{const result=command(w,f.id,{type:'travel',region:r.id,destination:home.id,ids:[v.id],cargo:{}});plan.phase='homebound';plan.journey=result.id;note(w,f.id,'Another colony claimed the destination. The expedition is returning with its people.');}catch{}return;
+    }
     if (!r.occupation) { try { command(w, f.id, { type: 'claim', region: r.id }); } catch {} }
     const crew = workers.filter(e => e.region === r.id && !e.vehicle && !e.journey && usable(e));
     const relay = r.buildings.find(b => b.faction === f.id && ['relay', 'core'].includes(b.kind) && b.hp > 0);
@@ -533,18 +562,18 @@ function aiExpedition(w, f, home, workers) {
     return;
   }
   const v = w.entities.find(e => e.faction === f.id && e.type === 'vehicle' && e.kind === 'hauler' && e.region === home.id && !e.journey && !e.disabled);
-  if (!v || v.fuel < 20 || workers.length < 7) return;
-  if (!canPay(home,f.id,{food:60,wood:30,stone:40,ore:35,parts:15})) return;
+  if (!v || v.fuel < 20 || (f.nextExpedition||0)>w.time || workers.filter(e=>e.region===home.id&&!e.journey).length < 7) return;
+  if (!canPay(home,f.id,{food:60,wood:30,stone:40,ore:35,parts:15,fuel:20})) return;
   if (v.crew.length < 2) {
     const candidate = workers.find(e => e.region === home.id && !e.vehicle && !e.journey && usable(e) && e.id !== f.scoutId && e.rest > 40 && e.hunger > 50);
     if (!candidate) return;
     if (distance(candidate, v) <= 4) { try { command(w, f.id, { type: 'board', region: home.id, ids: [candidate.id], vehicle: v.id }); } catch {} }
-    else if (!candidate.drafted) { candidate.drafted = true; job(candidate, 'move', { id: null }, { point: { x: v.x - 1, y: v.y } }); }
+    else if (candidate.job?.type !== 'move') { const point=freeEdge(home,v,f.id);if(point && route(home,candidate,point,B,f.id)!==null){candidate.drafted = true; job(candidate, 'move', { id: null }, { point });}else{candidate.drafted=false;clear(candidate);} }
     return;
   }
   const target = w.regions.filter(r => r.realm === home.realm && !r.owner && !r.occupation).sort((a, b) => Math.abs(a.gx - home.gx) + Math.abs(a.gy - home.gy) - Math.abs(b.gx - home.gx) - Math.abs(b.gy - home.gy))[0];
   if (!target) return;
-  const cargo = { food: 35, wood: 30, stone: 40, ore: 35, parts: 15 };
+  const cargo = { food: 35, wood: 30, stone: 40, ore: 35, parts: 15, fuel:20 };
   const q = journeyQuote(w, f.id, home.id, target.id, [v.id], cargo); if (q.error) return;
   try { const result = command(w, f.id, { type: 'travel', region: home.id, destination: target.id, ids: [v.id], cargo }); f.expedition = { journey: result.id, target: target.id, vehicle: v.id }; } catch {}
 }
@@ -579,7 +608,11 @@ export function step(w, dt = 0.1) {
         e.hunger = Math.max(0, e.hunger - dt * 0.025); e.rest = Math.max(0, e.rest - dt * 0.008); e.belonging = Math.max(0, e.belonging - dt * 0.004);
         if (!e.hunger) e.hp = Math.max(1, e.hp - dt * 0.02);
         if (e.job && !['eat', 'fieldEat', 'rest', 'camp', 'care', 'deliver'].includes(e.job.type) && !e.drafted && (e.hunger < 18 || e.rest < 8 || e.wounded)) clear(e);
-        if (!e.job) chooseJob(w, r, e);
+        if (!e.job) {
+          const urgent=e.hunger<55||e.rest<25||e.wounded||e.cargo;
+          e.nextWorkCheck ??= w.time + hash(Number(e.id.slice(1))||0,0,71)*.9;
+          if(urgent || w.time>=e.nextWorkCheck){chooseJob(w,r,e);e.nextWorkCheck=w.time+.6+hash(Number(e.id.slice(1))||0,Math.floor(w.time),71)*.8;}
+        }
       }
       if (e.job && e.job.type !== 'attack') doJob(w, r, e, dt);
     }

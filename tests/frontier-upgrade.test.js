@@ -1,0 +1,8 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {mkdtempSync,rmSync} from 'node:fs';import {join} from 'node:path';import {tmpdir} from 'node:os';import {DatabaseSync} from 'node:sqlite';import {Authority,ENGINE_FINGERPRINT} from '../src/frontier/authority.js';
+function isolated(fn){const dir=mkdtempSync(join(tmpdir(),'frontier-upgrade-'));try{fn(join(dir,'world.sqlite'));}finally{assert.ok(dir.startsWith(join(tmpdir(),'frontier-upgrade-')));rmSync(dir,{recursive:true,force:true});}}
+test('a different simulation cannot silently replay a crashed world or erase its journal',()=>isolated(file=>{
+  const a=new Authority(file,{size:128});a.tick(1,3);a.close(false);let db=new DatabaseSync(file);db.prepare("UPDATE metadata SET value='old-build' WHERE key='engine'").run();const before=db.prepare('SELECT event FROM journal').all();db.close();assert.throws(()=>new Authority(file),/different simulation build/);db=new DatabaseSync(file);assert.deepEqual(db.prepare('SELECT event FROM journal').all(),before);db.prepare("UPDATE metadata SET value=? WHERE key='engine'").run(ENGINE_FINGERPRINT);db.close();const restored=new Authority(file);assert.equal(restored.world.time,3);restored.close();
+}));
+test('a clean checkpoint can upgrade without changing people, ownership or elapsed time',()=>isolated(file=>{
+  const a=new Authority(file,{size:128});const owner=a.join('f0','Lasting colony');a.tick(1,5);const expected=JSON.stringify(a.world);a.close();const db=new DatabaseSync(file);db.prepare("DELETE FROM metadata WHERE key='engine'").run();db.close();const next=new Authority(file);assert.equal(JSON.stringify(next.world),expected);assert.equal(next.account(owner.token).faction,'f0');next.close();
+}));

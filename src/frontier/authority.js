@@ -1,17 +1,26 @@
+import {readFileSync} from 'node:fs';
 import { DatabaseSync } from 'node:sqlite';
 import { randomBytes, createHash } from 'node:crypto';
 import { newWorld, command, step, factionOf, regionOf, locals, explored, allied, stock } from './engine.js';
 
 const digest = s => createHash('sha256').update(s).digest('hex');
+// Persist the exact deterministic simulation identity, independent of Git or UI.
+export const ENGINE_FINGERPRINT = digest(['authority.js','engine.js','catalog.js','terrain.js','excavation.js'].map(file=>readFileSync(new URL(file,import.meta.url),'utf8').replace(/\r\n/g,'\n')).join('\n'));
+
+function routeCorners(points=[]){if(points.length<3)return points;const result=[points[0]];for(let i=1;i<points.length-1;i++){const a=points[i-1],b=points[i],c=points[i+1];if((b.x-a.x)*(c.y-b.y)!==(b.y-a.y)*(c.x-b.x))result.push(b);}result.push(points.at(-1));return result;}
+function entityView(e){const {blockedTargets,routeVersion,routeTarget,retry,route,...visible}=e;for(const k of ['x','y','hp','hunger','rest','belonging','morale','fuel'])if(typeof visible[k]==='number')visible[k]=Math.round(visible[k]*100)/100;return {...visible,route:routeCorners(route)};}
 export class Authority {
   constructor(filename, options = {}) {
     this.db = new DatabaseSync(filename);
-    this.db.exec('PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL; CREATE TABLE IF NOT EXISTS checkpoints (id INTEGER PRIMARY KEY CHECK(id=1), seq INTEGER NOT NULL, world TEXT NOT NULL); CREATE TABLE IF NOT EXISTS journal (seq INTEGER PRIMARY KEY AUTOINCREMENT, event TEXT NOT NULL); CREATE TABLE IF NOT EXISTS accounts (token TEXT PRIMARY KEY, faction TEXT UNIQUE NOT NULL, name TEXT NOT NULL); CREATE TABLE IF NOT EXISTS receipts (account TEXT NOT NULL, id TEXT NOT NULL, result TEXT NOT NULL, PRIMARY KEY(account,id));');
+    this.db.exec('PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL; CREATE TABLE IF NOT EXISTS metadata (key TEXT PRIMARY KEY, value TEXT NOT NULL); CREATE TABLE IF NOT EXISTS checkpoints (id INTEGER PRIMARY KEY CHECK(id=1), seq INTEGER NOT NULL, world TEXT NOT NULL); CREATE TABLE IF NOT EXISTS journal (seq INTEGER PRIMARY KEY AUTOINCREMENT, event TEXT NOT NULL); CREATE TABLE IF NOT EXISTS accounts (token TEXT PRIMARY KEY, faction TEXT UNIQUE NOT NULL, name TEXT NOT NULL); CREATE TABLE IF NOT EXISTS receipts (account TEXT NOT NULL, id TEXT NOT NULL, result TEXT NOT NULL, PRIMARY KEY(account,id));');
     const saved = this.db.prepare('SELECT * FROM checkpoints WHERE id=1').get();
     this.world = saved ? JSON.parse(saved.world) : newWorld(options.seed || 1986, options.size || 256);
     if (this.world.schema !== 3) throw new Error('Unsupported world schema; preserve the database and use its matching server.');
     const tail = this.db.prepare('SELECT event FROM journal WHERE seq>? ORDER BY seq').all(saved?.seq || 0);
-    for (const { event } of tail) this.apply(JSON.parse(event));
+    const previousEngine=this.db.prepare("SELECT value FROM metadata WHERE key='engine'").get()?.value;
+    if(tail.length && previousEngine!==ENGINE_FINGERPRINT){this.db.close();throw new Error('Uncheckpointed world belongs to a different simulation build. Preserve this database; start its previous build and stop it cleanly before upgrading. No journal input was replayed.');}
+    try {for (const { event } of tail) this.apply(JSON.parse(event));}catch(error){this.db.close();throw error;}
+    this.db.prepare("INSERT OR REPLACE INTO metadata(key,value) VALUES('engine',?)").run(ENGINE_FINGERPRINT);
     this.checkpoint(); this.closed = false;
   }
   apply(event) {
@@ -63,7 +72,7 @@ export class Authority {
     includeTerrain ||= terrainRevision !== (r.terrainRevision || 0);
     const vision = e => e.faction === f.id || allied(w, f.id, e.faction) || explored(r, f.id, e.x, e.y) && locals(w, r).some(p => p.faction === f.id && Math.hypot(e.x - p.x, e.y - p.y) < 22);
     const entities = w.entities.filter(e => e.region === r.id && (e.faction === f.id || !e.vehicle && vision(e))).map(e => {
-      if (e.faction === f.id) return e;
+      if (e.faction === f.id) return entityView(e);
       return { id: e.id, name: e.name, type: e.type, kind: e.kind, faction: e.faction, x: e.x, y: e.y, hp: e.hp, maxHp: e.maxHp, disabled: e.disabled, shot: e.shot };
     });
     return {

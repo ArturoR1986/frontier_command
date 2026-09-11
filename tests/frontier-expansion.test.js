@@ -1,0 +1,13 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {newWorld,makeBuilding,makePerson,makeMachine,step,command,journeyQuote} from '../src/frontier/engine.js';
+test('an established AI outpost returns its existing carrier and pilot while a resident remains',()=>{
+  const w=newWorld(1986,128);w.factions.forEach(f=>f.ai=false);const f=w.factions[0],home=w.regions[0],outpost=w.regions[1];f.ai=true;f.tech=['tools','engineering','transport'];outpost.owner=f.id;outpost.terrain.fill(0);outpost.topology++;outpost.explored[f.id]=Array.from({length:256},(_,i)=>i);
+  const relay=makeBuilding(w,outpost,f.id,'relay',10,64,true);Object.assign(relay.inventory,{food:100,ore:80,fuel:30});const a=makePerson(w,f.id,outpost.id,9,64,4),b=makePerson(w,f.id,outpost.id,9,66,5),v=makeMachine(w,f.id,outpost.id,'hauler',8,64);v.fuel=70;
+  f.expedition={journey:'arrival',target:outpost.id,vehicle:v.id};w.journeys.push({id:'arrival',status:'arrived',faction:f.id});const originalIds=[a.id,b.id],pilotSkills=structuredClone(a.skills);
+  for(let i=0;i<3600&&!w.journeys.some(j=>j.from===outpost.id&&j.to===home.id&&j.status==='arrived');i++)step(w,2);for(let i=0;i<16;i++)step(w,2);assert.ok(w.journeys.some(j=>j.from===outpost.id&&j.to===home.id&&j.status==='arrived'));assert.equal(v.region,home.id);assert.equal(w.entities.filter(e=>e.type==='vehicle'&&e.faction===f.id).length,1);
+  assert.equal(originalIds.filter(id=>w.entities.find(e=>e.id===id).region===outpost.id).length,1);assert.ok(w.entities.find(e=>e.id===a.id).skills.pilot>=pilotSkills.pilot);assert.ok([a,b].every(e=>e.hp>80));
+});
+
+test('an expedition can withdraw using its unloaded supplies without taking another colony goods',()=>{
+  const w=newWorld(1986,128);w.factions.forEach(f=>f.ai=false);const r=w.regions[1],p=w.entities.find(e=>e.faction==='f0');p.region=r.id;p.x=3;p.y=64;const v=makeMachine(w,'f0',r.id,'hauler',4,64);v.fuel=100;command(w,'f0',{type:'board',region:r.id,ids:[p.id],vehicle:v.id});r.drops=[{id:'food',faction:'f0',x:3,y:64,kind:'food',amount:8},{id:'wood',faction:'f0',x:3,y:64,kind:'wood',amount:30},{id:'other',faction:'f1',x:3,y:64,kind:'food',amount:100}];
+  const q=journeyQuote(w,'f0',r.id,w.factions[0].home,[v.id],{wood:30});assert.ok(!q.error,q.error);command(w,'f0',{type:'travel',region:r.id,destination:w.factions[0].home,ids:[v.id],cargo:{wood:30}});assert.equal(r.drops.find(d=>d.id==='other').amount,100);assert.equal(r.drops.find(d=>d.id==='food').amount,8-q.provisions);assert.ok(!r.drops.some(d=>d.id==='wood'));assert.equal(w.journeys[0].cargo.wood,30);assert.equal(p.journey,v.journey);
+});

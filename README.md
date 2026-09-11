@@ -33,3 +33,5 @@ node scripts/frontier-backup.mjs
 The current development package is in **dist/frontier-command/**. Launch its own server script or Windows launcher. Builds never copy live worlds or access keys. The backup command creates a consistent SQLite backup and verifies its integrity, including when the server is running. Stop the server before restoring a backup; preserve the current database and any WAL files before replacing anything.
 
 Research: [sampled gameplay review](docs/GAMEPLAY_VIDEO_REVIEW.md), [developer/player review](docs/DEVELOPER_AND_PLAYER_REVIEW.md). Production evidence and remaining gates: [status](docs/PRODUCTION_STATUS.md). Historical restoration code and its QA are retained for regression only; npm run legacy serves that earlier prototype on port 4173.
+
+Before replacing server code, stop the running server with Ctrl+C and keep a verified backup. A crashed world with uncheckpointed input must first be recovered and stopped using its previous simulation build. The server refuses to replay that input under different simulation rules.

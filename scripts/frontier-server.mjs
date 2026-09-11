@@ -1,4 +1,5 @@
 import http from 'node:http';
+import {gzip} from 'node:zlib';
 import { readFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -14,7 +15,10 @@ const authority = new Authority(path.join(data, 'world.sqlite'), { size: Number(
 const mime = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.json': 'application/json' };
 const rates = new Map(), timings = [];
 setInterval(()=>{const now=Date.now();for(const [key,rate]of rates)if(now-rate.at>60000)rates.delete(key);},30000).unref(); let shuttingDown = false, ticks = 0;
-const send = (res, code, value) => { res.writeHead(code, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(value)); };
+const send = (res, code, value) => {const payload=Buffer.from(JSON.stringify(value)),headers={'Content-Type':'application/json','Cache-Control':'no-store','Vary':'Accept-Encoding'};
+  if(payload.length>4096 && /\bgzip\b/.test(res.req.headers['accept-encoding']||'')){gzip(payload,{level:1},(error,compressed)=>{if(res.destroyed)return;const body=error?payload:compressed;res.writeHead(code,{...headers,...(!error?{'Content-Encoding':'gzip'}:{}),'Content-Length':body.length});res.end(body);});}
+  else {res.writeHead(code,{...headers,'Content-Length':payload.length});res.end(payload);}
+};
 async function body(req) { let text = ''; for await (const chunk of req) { text += chunk; if (text.length > 65536) throw new Error('Command too large.'); } return JSON.parse(text || '{}'); }
 const server = http.createServer(async (req, res) => {
   res.setHeader('X-Content-Type-Options', 'nosniff'); res.setHeader('Referrer-Policy', 'no-referrer');
@@ -53,5 +57,6 @@ const interval = setInterval(() => {
   catch (e) { console.error('Simulation stopped; durable input retained:', e); shutdown(1); }
 }, 100);
 function shutdown(code = 0) { if (shuttingDown) return; shuttingDown = true; clearInterval(interval); server.close(() => { authority.close(code === 0); process.exit(code); }); }
+process.stdin.setEncoding('utf8');let consoleInput='';process.stdin.on('data',chunk=>{consoleInput+=chunk;const lines=consoleInput.split(/\r?\n/);consoleInput=lines.pop();for(const line of lines)if(line.trim()==='quit')shutdown();});
 process.on('SIGINT', () => shutdown()); process.on('SIGTERM', () => shutdown());
 server.listen(port, host, () => console.log(`Frontier Command persistent world: http://${host}:${port}\nDatabase: ${path.join(data, 'world.sqlite')}`));
