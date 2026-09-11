@@ -1,8 +1,10 @@
 # Frontier Command — Learning transfer and original-game brief
 
-Guidance revision: 0.2 | Updated: 2026-09-11
+Guidance revision: 0.3 | Updated: 2026-09-11
 Creator: Arturo Ruiz Albarrán | Prepared with ChatGPT
 Status: corrected production intent; not a specification to finish v0.5
+
+Latest creator direction supersedes the former finite restoration scope: **RimWorld + classic StarCraft; persistent worlds with lasting colonies; territorial growth and conquest; cooperation or war across connected realms.** The earlier completion claim was rejected and Issue #1 is reopened. Read GAMEPLAY_RESEARCH_2026_09_11.md, GAME_DESIGN.md, PRODUCTION_PLAN.md and PRODUCTION_STATUS.md for current evidence, design experiments and the next action. Historical prototype QA is not current product acceptance.
 
 ## 1. The central correction
 

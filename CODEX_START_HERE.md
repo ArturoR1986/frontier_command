@@ -1,8 +1,14 @@
 # Codex — Start here: learn, synthesize, create
 
-Guidance revision: 0.2 | Updated: 2026-09-11
+Guidance revision: 0.3 | Updated: 2026-09-11
 Repository: `ArturoR1986/frontier_command` | Branch for this guidance: `main`
 Mission: https://github.com/ArturoR1986/frontier_command/issues/1
+
+## Current direction and next action
+
+The creator rejected the earlier restoration sandbox as completion: purpose is unclear, the map is too small, and growth does not lead to conquest. References are **RimWorld and classic StarCraft**, not Factorio. The creator explicitly chose **persistent worlds with lasting colonies**. Strong colonies must take territory, grow into a wider world, and cooperate or fight with powerful colonies from other realms.
+
+Issue #1 remains open. Read `docs/GAMEPLAY_RESEARCH_2026_09_11.md`, `docs/GAME_DESIGN.md`, `docs/PRODUCTION_PLAN.md` and `docs/PRODUCTION_STATUS.md`. The former v1 package/QA are historical technical evidence, not acceptance of the requested game. Begin P1 with faction/region contracts and a two-colony economy fixture; continue through shared persistence, conquest and connected realms. A research pass or internal slice does not complete this mission.
 
 ## Important correction from the creator
 

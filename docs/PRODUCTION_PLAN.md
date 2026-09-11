@@ -1,25 +1,44 @@
-# Finite production plan — guidance 0.2
+# Production plan — persistent colony conquest
 
-## Milestones
+Guidance 0.3, 2026-09-11. All new milestones are **unpassed**. The old restoration package is a technical prototype. This plan addresses the creator's request to study and define the next step; planning does not complete the game mission.
 
-1. Reconcile corrected brief; preserve working implementation and previous test evidence. Complete focused reference findings and choose the original design.
-2. Implement civil/field duty, safe interruption/resumption, caregiver treatment, homes, Commons and charter. Prove labor/care/military consequences.
-3. Implement three map restoration sites, disclosed defenders, physical restoration and distinct rewards. Prove a complete restoration/independence arc.
-4. Refine original world art, civic/tactical UI, scene states, onboarding and save compatibility. Inspect crowded scenes and operation sequences.
-5. Run all regressions, comparison experiments, care/organization, expedition/aftermath, intentional recovery, save/return, opening and hour-long stability sessions; profile target load.
-6. Test extracted package, record FINAL_QA_REPORT.md against revision 0.2, reconcile remote guidance, obtain CI on final source and complete the mission only then.
+## P1 — Prove why the colony grows
 
-## Design-specific gates
+Build a reproducible nine-region fixture with two economically active colonies and a contested resource outpost. Regions support building and cross-region travel, not decorative screens. Introduce ownership and faction-scoped stocks before opponent production. Reuse safe jobs, care and cargo. Replace restoration as the main purpose with supplied expansion and territorial control; show objective, benefit, bottleneck and next action.
 
-- Equal-worker depot comparison shows a material throughput difference.
-- Mobilizing Mara slows construction; release restores it, with conserved material ownership.
-- An injured specialist has lower capability until another person supplies treatment; staffing and provisions have observable cost.
-- Charter/home/Commons organization changes recovery, morale or labor rate in measured tests, and is inspectable in UI.
-- At least one remote-site run uses real movement, defense, material delivery and a persistent reward. A full run restores all three and reaches the independent-network achievement.
-- Sites do not spawn concealed punishment; inspection gives requirements and defenders before commitment.
-- Every new state survives save/close/load; format compatibility and corruption handling remain explicit.
-- All previous useful regressions remain. Browser tests cover civic controls, duty and frontier interaction in addition to existing commands.
-- Normal and crowded visuals show function, people, duties, work and tactical pressure at 1280×720 and larger.
-- 60 simulated minutes at 16 people/80 structures; p99 simulation below 16 ms and headless frame p95 below 50 ms on reported hardware; retained heap growth below 20 MB.
+Acceptance:
 
-Risks: care starving essential labor, duty silently orphaning cargo, remote guards bypassing the safe opening, passive research/flags pretending to be progression, and new panels hiding core controls. Tests must target these directly. An internal slice is not the release.
+- Both colonies gather, construct, equip/recruit and suffer economic interruption under the same rules. No free scheduled armies as the rival economy.
+- Starting territory cannot provide every advanced capability. The outpost changes measured income or production options. Home investment and early expansion are both playable.
+- Supply physically reaches the outpost. Blockade depletes reserves before readiness changes; recovery conserves cargo.
+- Battle and occupation change ownership and productive output. Defeat permits retreat, treatment and rebuilding. Mobilization visibly costs domestic labor.
+- Save/restart preserves both colonies, ownership, routes and unfinished work. Region crossings neither duplicate nor lose people/goods.
+- A reviewed 30–45 minute session covers preparation, expansion, conflict and aftermath. A fresh-player review checks five-minute goal comprehension and next-action clarity; scripted tests cannot establish this. Label developer judgment separately.
+
+This internal proof does not redefine v1. **First implementation action:** faction/region state contracts and a deterministic two-colony economy fixture, then the playable expansion loop.
+
+## P2 — Prove persistence with real clients
+
+Move time and commands to a durable local server early, before broad content. Connect two independent browser clients with separate identities. Commands carry sequence IDs and ownership validation; rejection explains why. Rendering/prediction stays separate from authoritative results.
+
+Acceptance: unauthorized commands fail; retries cannot double-spend; reconnect restores the same world; one client's pause/hide/disconnect cannot halt another; server restart preserves ownership/pending work. Test races over assets, reconnect during combat, malformed orders and crash recovery. Show an offline return summary. localStorage export is not shared persistence.
+
+## P3 — Conquest and recovery
+
+Implement declared sieges, defense windows, garrisons, occupation/integration, surrender/evacuation and recoverable defeat. Add production choices, scouting and counters rather than only more hit points. Test a stronger colony taking useful weaker-colony territory, a failed overextended invasion, and offline rules across timezones. The winner gains control; the loser understands their continuing role.
+
+## P4 — Connected realms and diplomacy
+
+Run two persistent realms with at least two player colonies each. Connections support trade/travel and cooperation or war between previously separate domains. Durable transfer IDs and prepare/commit/recovery states prevent duplication. Inject crashes/disconnects before and after every transfer boundary; exactly one realm owns each person and cargo afterward. Verify treaty changes, vision revocation and simultaneous claims. A map button or unlock flag does not establish realm connectivity.
+
+## P5 — Content, usability and release qualification
+
+Complete onboarding, original visual states, audio/settings, administrative recovery, account/session handling, backups, abuse controls and packaged client/server startup. Development requires no paid service. Select an authorized accessible delivery environment before final release.
+
+Initial engineering load target, not implemented capacity: two realms of at least nine expandable regions each; four connected player clients total; 100 persistent people per colony; 1,000 structures world-wide; two simultaneous engagements. On reported hardware, target server tick p95 below 50 ms at 10 Hz and client frame p95 below 33 ms at 1280×720 with action visible. Measure active/inactive regions, navigation churn, retained memory and transfer traffic. Profile failures require optimization or an explicit blocker, not a return to the 16-person completion scope.
+
+Run a 24-hour persistent-world soak with restart/disconnected-player cases, plus reviewed real-time opening, ordinary development, war, recovery, diplomacy and cross-realm sessions. Verify victory without resetting the world. Preserve useful regressions; update obsolete restoration expectations honestly. Qualify the actual package. Automated success and player comprehension are separate gates.
+
+## Ordering and release rule
+
+P1 proves purpose; P2 establishes authority before broad content; P3/P4 deliver conquest and larger-world play; P5 qualifies the whole. Resume research only for specific unresolved decisions. Record implementation, executed evidence and failures in PRODUCTION_STATUS.md. Issue #1 remains open until current V1_COMPLETION_CRITERIA.md passes. Research, P1 or the old tests cannot close it.

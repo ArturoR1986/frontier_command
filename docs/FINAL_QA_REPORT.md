@@ -1,8 +1,10 @@
 # Final QA report — Frontier Command 1.0
 
+**Superseded completion assessment, 2026-09-11:** the creator rejected this package as the finished game because gameplay purpose, scale and sustained growth were inadequate. It is a tested restoration prototype. Measurements below remain historical evidence for that runtime, but do not pass the current persistent-world/conquest scope. Issue #1 is reopened. See PRODUCTION_STATUS.md and V1_COMPLETION_CRITERIA.md revision 0.3. No revised-product release has been verified.
+
 Guidance/release gate: revision 0.2, 2026-09-11. Owner: Codex for Issue #1.
 
-**Status: PASS — all eight outcome gates satisfied for the finite design.** The exact-revision opening completed successfully; the tested runtime, package and CI results below are verified.
+**Historical assessment: PASS against the former restoration design; current product completion: NOT PASSED.** The opening, runtime, package and CI results below remain verified technical evidence with the former scope's limits.
 
 ## Exact deliverable
 

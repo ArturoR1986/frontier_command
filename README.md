@@ -1,8 +1,8 @@
 # Frontier Command
 
-Original real-time colony strategy in Ashwater Basin. Four named settlers build a home through visible gathering, hauling and construction. Organize homes, work, care and field duty, then restore three basin installations. Growth raises both capability and Exposure.
+Original colony strategy in development, informed by RimWorld and classic StarCraft. The target is lasting colonies that grow, conquer territory and encounter other players across connected persistent realms, with cooperation or war.
 
-Creator: Arturo Ruiz Albarrán. Implementation owner: Codex. Mission: [Issue #1](https://github.com/ArturoR1986/frontier_command/issues/1). See [final QA](docs/FINAL_QA_REPORT.md) for the tested v1.0 scope, source, package and evidence.
+Creator: Arturo Ruiz Albarrán. Implementation owner: Codex. Mission: [Issue #1 — open](https://github.com/ArturoR1986/frontier_command/issues/1). The playable build is an earlier small restoration prototype; it does not implement multiplayer, conquest or connected realms. Its technical checks passed, but the creator rejected it as the completed game. See [current status](docs/PRODUCTION_STATUS.md), [gameplay research](docs/GAMEPLAY_RESEARCH_2026_09_11.md) and [next-stage plan](docs/PRODUCTION_PLAN.md). [Historical QA](docs/FINAL_QA_REPORT.md) preserves the tested package and evidence.
 
 ## Run
 
@@ -71,12 +71,12 @@ An existing Playwright can be supplied via PLAYWRIGHT_PATH (absolute index.mjs p
 
 ## Scope and documentation
 
-Target: one 64×48 basin, 16 settlers, 80 structures, keyboard/mouse, 1280×720 or larger. Mobile, multiplayer and campaign play are outside this sandbox release. Natural deposits are finite; farms renew food and contacts may leave salvage. Frontier establishment leads to continued sandbox play.
+Current prototype only: one 64×48 basin, 16 settlers, 80-structure performance target, keyboard/mouse, 1280×720 or larger. It supports local restoration and sandbox continuation. These are implementation limits, not accepted final scope. Persistent multiplayer, territorial conquest and connected realms remain required work in the [revised design](docs/GAME_DESIGN.md).
 
 - [Architecture](docs/ARCHITECTURE.md)
 - [QA report and performance](docs/QA_REPORT.md)
 - [Release notes](docs/RELEASE_NOTES.md)
 - [Credits and rights](docs/CREDITS.md)
 - [Changelog](CHANGELOG.md)
-- [Original completion criteria](docs/V1_COMPLETION_CRITERIA.md)
+- [Current completion criteria](docs/V1_COMPLETION_CRITERIA.md)
 - [Agent handoff](CODEX_START_HERE.md)

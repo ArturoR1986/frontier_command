@@ -1,36 +1,57 @@
-# Frontier Command — a community that restores its frontier
+# Frontier Command — lasting colonies, contested worlds
 
-Guidance 0.2 synthesis, 2026-09-11. Source IDs refer to REFERENCE_FINDINGS.md. All emotional expectations are design hypotheses.
+Guidance 0.3, 2026-09-11. **Design target, not implemented behavior.** Supersedes the small restoration-community scope. Evidence: [gameplay study](GAMEPLAY_RESEARCH_2026_09_11.md).
 
-## Player role and arc
+## Confirmed direction and purpose
 
-The player is steward and field commander of a small restoration community. Establish reliable food and housing, organize care and shared life, then recover three installations beyond the landing perimeter. These recover a water system, technical archive and signal network. Securing all three with a functioning Commons and healthy community establishes an independent basin network; the player may continue the sandbox afterward.
+Combine RimWorld and classic StarCraft in an original game. Colonies persist between sessions. Players develop strong colonies, conquer weaker rivals, expand into a larger world and encounter powerful colonies from other realms, with cooperation or war. Dominance must be possible. The current 64×48, 16-person restoration sandbox does not satisfy this direction.
 
-This retains the working setting after comparison, not by mandate. Its small scale suits individually accountable tactical choices. Expected emotion: investment in a place and its people, followed by confidence earned through preparation.
+The player governs a colony and commands expeditions. **Build a society capable of taking and holding a growing domain.** Each stage reveals a concrete opportunity, benefit, cost and competing threat.
 
-## Coupled systems
+## Progression
 
-| Decision | Mechanical consequence across layers |
-| --- | --- |
-| Mobilize a skilled worker | Immediate field control; suspended civilian work/cargo stays safe; construction or food throughput falls until release |
-| Appoint a caregiver and recover casualties | Caregiver travels and consumes provisions; wounds clear and specialist productivity returns; another job loses staffing |
-| Choose settlement priority | Balanced, recovery or industry charter changes work effort, need consumption and care/rest; effects are explicit and reversible |
-| Assign homes and build a Commons | Travel/comfort and social restoration affect morale, work rate and field readiness |
-| Restore a remote installation | Commit physical construction materials and labor, protect the route, face disclosed guards; gain a distinct persistent capability |
-| Place stores and defenses | Shorter hauling competes with safer locations and power access; terrain/sight lines affect both labor and combat |
+| Stage | Main decision | Result and next purpose |
+| --- | --- | --- |
+| Establish a home | Allocate labor between food, housing and equipment | Reserves and rested specialists make an expedition sustainable. |
+| Develop capacity | Invest in civilians, production, training or defenses | More output and different field capabilities; army growth competes with domestic investment. |
+| Reach the frontier | Scout a route and choose a resource outpost | A supplied outpost adds material income or an equipment tier. |
+| Contest a region | Raid logistics, defend, negotiate or assault | The rival loses supply/production or yields territory; the player incurs casualties and upkeep. |
+| Consolidate a domain | Repair, supply and staff occupied territory | Assets contribute after integration; overextension creates vulnerable routes. |
+| Connect realms | Establish contact with another developed domain | Trade, access agreements, joint operations or war with another persistent player. |
 
-## Control/time and contracts
+A region contains detailed terrain; a realm contains connected regions; the wider world connects realms. Linked local/regional views show travel times and ownership. The first nine-region proof is a test fixture, not the final size limit. Final capacity requires profiling.
 
-Real-time with pause and 1×/2×/4×. Civil priorities are ordered and visible. Field duty halts civilian scheduling; movement/work/attack commands override immediately. A suspended job is resumed only if still valid; cargo remains owned by the person. Critical hunger/rest automatically releases field duty with a visible message. Care is a physical job, not a global healing button.
+## Civilian and military interaction
 
-Construction claims materials at withdrawal, subtracting delivered/in-flight quantities. Cancellation and death create recoverable cargo. Pathing targets building edges; changes invalidate routes. Persistence validates data before replacement and preserves civic duties, wounds, memories, assignments and restored sites.
+People retain identity, skills, needs, wounds and assignments. Squads simplify commands without deleting individuals. Field duty reserves people/equipment and previews lost civilian staffing. Production needs labor, inputs and facilities; training takes time and equipment. Rival forces cannot appear from an abstract threat timer.
 
-## Finite content and visual identity
+Goods live at owned locations. Routes supply food, equipment and materials to outposts. A broken route consumes local reserves before readiness falls; show cause, buffer and recovery action. Homes need purposeful ordinary work and living conditions without constant emergency clicking.
 
-One 64×48 basin, up to 16 people, 80-structure performance target. Existing ten functional structures plus Commons and restoration relay. Three research paths and three distinct restoration rewards. Scavenger defenders use recognizable civilian/security/hostile silhouettes; tactical work and care occur in the same world.
+Opponents use the same economy and ownership rules. AI is a reproducible development opponent, not a substitute for human multiplayer. Scouting reveals observations; hidden enemy changes do not magically update intelligence.
 
-Original visual language: weathered service modules, pale living canopies, copper industrial hardware, open Commons tables and large landmark structures. Avoid identical colored tiles. Role equipment, body shape, care props, cargo, ground rings and duty badges distinguish people. Terrain has river channels, a broken ridge and remote landmarks. Review far/normal/close and crowded scenes; text supports the world.
+## Persistent rules selected for prototyping
 
-## Explicit exclusions
+These are reversible Codex design choices, not additional user requirements or verified balance:
 
-No copied reference assets/UI, no body-part/romance simulation, no huge armies, multiplayer, campaign map or paid infrastructure. These exclusions bound production without removing society organization, person-level consequences or meaningful military/economic interaction.
+- A server owns time and state. Menus pause local input only; solo rehearsal can offer pause. Civilians follow stored policies while the owner is absent, with recovery reserves and a return summary.
+- Frontier raids can damage logistics. Taking a core requires a declared siege, advance notice and a published defense window. Prototype 24-hour notice and a defender-selected daily two-hour core vulnerability window. Travel cannot bypass it. Test timezone abuse and indefinite avoidance.
+- Conquest transfers territory and repairable productive assets after military control and occupation. The loser can surrender, accept subordination or evacuate survivors. A refuge preserves a recovery path without retaining conquered territory for free.
+- Occupation requires a supplied garrison and integration time. Expansion exposes routes and increases administration costs. Strength remains advantageous; overextension and coalitions offer resistance without making conquest cosmetic.
+- A dominant colony wins a realm after controlling strategic centers and capturing or securing formal submission of remaining cores, then maintaining that state through a published contest period. Prototype a 24-hour hold. Record the winner and open outward progression; do not reset the colony/world. Allies can assist a colony's victory; shared victory is not assumed. Further connected realms extend the contest.
+- Initial diplomacy offers explicit peace/war, trade, access and revocable alliances/shared vision. Access revocation gives a visible withdrawal grace period before stranded units become hostile. No instant surprise attack through a canceled treaty.
+
+Notice/window/hold numbers are experiments. Accelerated fixtures test correctness, but real offline/online sessions must assess the waiting experience.
+
+## Clarity contract
+
+Always answer: **What am I pursuing? Why does it matter? What blocks it? What can I do next?** Start with a local need, show the resulting capacity, then reveal a contested resource. Explain a blockade through the route and reserve, not an unexplained percentage. New buildings, traffic, forces and territory states make growth visible beyond the HUD.
+
+Provide optional guidance and an inspectable progression map without enforcing one build order. After five minutes, a new player should identify the purpose and explain one meaningful next choice.
+
+## Architecture and finite release boundary
+
+Preserve tested rules where useful. Introduce stable world/realm/region/faction/entity IDs, ownership and validated commands. Use regional navigation plus local paths, spatial indexes and visibility-filtered subscriptions. Peaceful inactive regions may advance coarsely; contested regions require consistent authoritative detail. Verify equivalence and activation transitions.
+
+Keep the browser as the first client. Build a durable local server before public hosting. Account operations and abuse handling remain production work. Cross-realm travel requires exactly one owner and a durable transfer record so crashes/retries cannot duplicate people or goods.
+
+Finite v1 includes the complete loop, at least two connected persistent realms, real human clients, lasting ownership, conquest/recovery, cooperation/war and tested domain victory. Load targets are in the plan, not a massive-multiplayer claim. Mobile, paid economies and copied franchise content are excluded. Persistence, territorial growth and cross-realm interaction cannot be excluded to close Issue #1.

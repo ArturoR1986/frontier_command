@@ -1,6 +1,14 @@
 # Decision log — intent, hypotheses and chosen design
 
-Guidance revision: 0.2 | Updated: 2026-09-11
+Guidance revision: 0.3 | Updated: 2026-09-11
+
+## 2026-09-11 — Persistent conquest supersedes restoration completion
+
+**Adopted user direction:** the creator rejected the game as far from done: purpose is unclear, space/growth inadequate, and progress should lead to stronger colonies conquering weaker ones and meeting developed players from connected realms, with cooperation or war. References were explicitly corrected to RimWorld and classic StarCraft, not Factorio. The persistence answer was **persistent worlds with lasting colonies**.
+
+The earlier civic expedition selection below is historical implementation, not current acceptance. Issue #1 is reopened. Technical QA and useful code remain; the completion claim is withdrawn. Current evidence is in GAMEPLAY_RESEARCH_2026_09_11.md. PRODUCTION_PLAN.md defines P1–P5; no new gate has passed.
+
+**Selected for prototyping, unverified:** economically funded rivals, faction/region ownership, physical outpost supply and a shared authoritative server. Prototype announced core sieges/defense windows, occupation costs, evacuation/surrender and persistent domain victory. Specific rules/timings in GAME_DESIGN.md are Codex proposals, not user answers. Test growth, recovery, offline fairness and meaningful conquest. Nine regions/two colonies form an internal proof, not the product boundary. Finite v1 retains human clients and at least two connected persistent realms.
 
 ## 2026-09-11 — Creator correction: learning transfer, not prototype continuation
 

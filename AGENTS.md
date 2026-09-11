@@ -1,9 +1,11 @@
 # AGENTS.md — Research-led original game production
 
-Guidance revision: 0.2 | Updated: 2026-09-11
+Guidance revision: 0.3 | Updated: 2026-09-11
 Project: Frontier Command (working title) | Creator: Arturo Ruiz Albarrán
 
 ## Mission and intention
+
+Latest creator direction supersedes the former restoration scope: combine **RimWorld and classic StarCraft** (not Factorio); build **persistent worlds with lasting colonies**, meaningful growth, stronger colonies conquering weaker ones, and connected realms where developed players cooperate or fight. The creator rejected the earlier v1.0 completion claim because purpose and growth were insufficient. Issue #1 is open. Read `docs/GAMEPLAY_RESEARCH_2026_09_11.md`, the revised design/plan and current status. Do not use the old small-map checklist to close the mission.
 
 Create a complete, original game informed by a focused study of classic StarCraft and RimWorld. Transfer the learning from our v0.1–v0.5 trials, not their architecture or limitations. Those experiments were very basic, unreliable and not representative of the intended product. This is not a task to finish, port, polish or recreate v0.5.
 
