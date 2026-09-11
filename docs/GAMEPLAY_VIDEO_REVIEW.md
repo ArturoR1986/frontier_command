@@ -35,3 +35,15 @@ Later, parts, fuel, power and research make transport and robot fabrication poss
 The globe does not replace the home. Travel takes distance-dependent time, with vehicles changing speed, cargo and route options. Territorial control produces opportunity and supply obligations. Persistent multiplayer, offline policy and cross-realm ownership are original design problems; neither reference footage validates them. Prototype rules must be disclosed and tested, and human-play gates remain unverified until actual play is observed.
 
 Construction/skill/research durations are initial tuning values, not claims of a validated multi-hour progression. Accelerated engineering fixtures will be labeled explicitly. The next work is implementation and review of this loop, not another general research round.
+
+
+## Follow-up after the creator's v0.2 playtest
+
+11 September 2026. Targeted visual reinspection, not complete continuous viewing:
+
+- Quill18's same vanilla opening: inspected the work-table frame at 20:00, the 30:30 resource/work-priority frame with tree-cutting captions, and a subsequent frame selecting a loose wood stack labeled 57. The later frame's exact player timestamp was not captured. These frames distinguish designation, physical goods and storage from a generic resource counter. They also show most of the outdoor view remaining available while a work table is open.
+- Artosis's same Flash–Stork Brood War/Remastered recording: inspected the active army frame at video 17:00 (game clock about 17:03), then a later frame showing a large selection box, a terrain crossing and separated units (game clock 19:23; exact video timestamp not captured). Playback advanced between inspections while implementation proceeded; those intervening moments are not claimed as watched. The previously recorded battle and production samples from the other StarCraft videos remain separate evidence.
+
+Resulting design changes: preserve live controls while state updates; interpolate actual movement samples; make wall strokes and floor areas quick to plan; keep the map workspace open; make surveyed terrain readable while deposits still require scouting; show an explicit researcher and actual progress; distinguish facility silhouettes; and separate overlapping units. Tactical rehearsal tests positioning, damage, withdrawal and crew survival with prepared equipment. It is visibly labeled and does not establish normal fabrication or progression pacing.
+
+Developer evaluation: the previous interface obstructed ordinary planning, hid the surrounding landscape and made work feel intermittent. The revised version reduces those obstacles, but neither visual samples nor engineering tests establish excitement comparable to either reference. Sustained meaningful choices, colony attachment, rival strategy, recovery and human play remain to be reviewed.

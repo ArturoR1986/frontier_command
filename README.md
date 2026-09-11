@@ -1,86 +1,35 @@
 # Frontier Command
 
-Original colony strategy in development, informed by RimWorld and classic StarCraft. The target is lasting colonies that grow, conquer territory and encounter other players across connected persistent realms, with cooperation or war.
+**v0.2.0 — early playable prototype.** Original persistent colony strategy informed by RimWorld's colony development and classic StarCraft's tactical combat. The creator's intended v1.0 is still in production; tests do not establish enjoyment or release readiness.
 
-The current design calls for a large home map shaped by terrain, a wider world where travel technology matters, skilled civilians operating valuable vehicles, and manufactured robots as the more replaceable military force. These are required design targets, not features of the current prototype. Offline attack rules remain open to playtesting. See the [updated design](docs/GAME_DESIGN.md).
+Build a lasting home on a 256×256 terrain map, develop named specialists, and work toward vehicles, manufactured forces and supplied territorial expansion across two realms. These systems exist in the current build but their integration, balance, multiplayer experience and long-term reliability remain under review. Creator: Arturo Ruiz Albarrán. Implementation owner: Codex. [Issue #1](https://github.com/ArturoR1986/frontier_command/issues/1) remains open.
 
-Creator: Arturo Ruiz Albarrán. Implementation owner: Codex. Mission: [Issue #1 — open](https://github.com/ArturoR1986/frontier_command/issues/1). The playable build is an earlier small restoration prototype; it does not implement multiplayer, conquest or connected realms. Its technical checks passed, but the creator rejected it as the completed game. See [current status](docs/PRODUCTION_STATUS.md), [gameplay research](docs/GAMEPLAY_RESEARCH_2026_09_11.md) and [next-stage plan](docs/PRODUCTION_PLAN.md). [Historical QA](docs/FINAL_QA_REPORT.md) preserves the tested package and evidence.
+## Play the current build
 
-The extensive [developer and player review](docs/DEVELOPER_AND_PLAYER_REVIEW.md) examines development journals, setbacks, lessons and contrasting feedback from both references. A [readable PDF](output/pdf/rimworld-starcraft-development-review.pdf) and [source inventory](docs/research/developer-review-sources.json) accompany it. The next gameplay proof now includes shared authority and two clients; the review itself does not implement those systems.
+Requires **Node.js 24+** and a desktop browser. No dependency installation is needed.
 
-## Run
+On Windows, open **Launch Frontier.cmd**, or run:
 
-Requires Node.js 22+ and desktop Chrome or Edge. No dependency installation is needed to play, build or run simulation tests.
+~~~sh
+node scripts/frontier-server.mjs
+~~~
 
-```sh
-git clone https://github.com/ArturoR1986/frontier_command.git
-cd frontier_command
-node scripts/serve.mjs
-```
+Open **http://127.0.0.1:4180/**. Choose an unclaimed colony or restore your existing access key. Keep the server running while playing. Stop it with Ctrl+C. It binds to this computer by default; no public hosting is configured.
 
-Open **http://127.0.0.1:4173** and choose **Begin landing**. Stop the server with Ctrl+C.
+The world is stored in **data/world.sqlite**, independently of the browser. Retain your colony access key, available in the field manual, to return from another browser. Client menus do not pause a shared world. The local simulation advances while its server is running and resumes its saved time after shutdown; it does not simulate the computer's powered-off time.
 
-## Production build
+Drag to draw walls or fill floor areas. Use the mouse wheel, WASD, Shift-drag, Whole map and Expand workspace to navigate the home terrain. Research shows its infrastructure/material requirements and lets you assign a named researcher. [Current controls](docs/CURRENT_CONTROLS.md).
 
-```sh
-node scripts/build.mjs
-node scripts/serve.mjs --dist
-```
+## Build, check and back up
 
-The complete game is in `dist/`. To use the downloadable build independently, extract it, open a terminal in that folder, run `node serve.mjs`, and open the local address above. Use HTTP: opening index.html through file:// does not support ES modules. Static hosting at a domain root works; subdirectory hosting requires URL adaptation.
-
-There are no remote assets, CDN fonts, telemetry, accounts or API keys. The local server binds to loopback. The downloaded game runs offline.
-
-## Play
-
-- Left-click selects; drag a box or Shift-click selects a group. The roster also selects people.
-- Right-click ground to move, resources to gather, blueprints to assist, damaged structures to repair, or hostiles to engage. X stops orders, then autonomy resumes.
-- Build Habitat → Hydro Farm → Generator. Workers physically deliver materials before construction. Leave approaches open.
-- WASD/arrows or middle/Shift-drag pan. Wheel/+/- zoom. F or Colony centers the camera. Click the minimap to navigate.
-- Space pauses; the speed button cycles 1×, 2×, 4×. Menus pause automatically.
-- Build a Workshop for tools, defense or medicine. Barracks train selected settlers. Invite people when housing and food allow it.
-- Automatic raids wait 20 simulated minutes. You can start disclosed site expeditions earlier. Afterward, sufficient Exposure creates a directional warning. Rally Kei, power defenses, and repair afterward.
-
-Use **Help** for the full in-game reference, audio volume and guidance settings. [Controls and mechanics](docs/CONTROLS.md) explain the details.
-
-## Saves
-
-Save writes a manual browser-local slot; a separate autosave runs every two simulated minutes. Load prefers manual and falls back to autosave only when no manual slot exists. Menu → Export save creates a portable JSON file; Import save restores one. Starting a new landing first autosaves the existing colony.
-
-Format 2 retains the map, people, needs, cargo, jobs, deliveries, stocks, research, threats and settings. Civic assignments, wounds, suspended work and restored sites persist. Format 1 migrates to civic defaults and adds accessible restoration sites without deleting existing buildings or resource nodes; local landmark terrain is cleared. Paths recalculate safely. Invalid/unsupported saves are rejected before replacing the colony. Browser data belongs to the origin/profile and is lost if site storage is cleared; export to transfer or back up.
-
-## Verify
-
-```sh
+~~~sh
 node scripts/check.mjs
 node --test
 node scripts/build.mjs
-node --expose-gc scripts/profile.mjs
-```
+node scripts/frontier-http-smoke.mjs --package
+node scripts/frontier-backup.mjs
+~~~
 
-For browser automation only:
+The current development package is in **dist/frontier-command/**. Launch its own server script or Windows launcher. Builds never copy live worlds or access keys. The backup command creates a consistent SQLite backup and verifies its integrity, including when the server is running. Stop the server before restoring a backup; preserve the current database and any WAL files before replacing anything.
 
-```sh
-npm install --no-save playwright@1.58.2
-npx playwright install chromium
-node scripts/smoke.mjs
-node scripts/community-playtest.mjs
-```
-
-Run tests and profile before smoke: they produce save fixtures in `artifacts/`. The smoke suite uses real interface clicks for placement, commands, pause, save/reload, camera and help. `node scripts/opening-playtest.mjs` plays 20 simulated minutes in a real browser at the normal 4× speed; allow about five minutes.
-
-An existing Playwright can be supplied via PLAYWRIGHT_PATH (absolute index.mjs path), and a Chromium executable via BROWSER_PATH. These are test settings, not game requirements.
-
-[CI](.github/workflows/ci.yml) checks syntax/whitespace, simulation tests, packaging, stress performance and browser behavior, then uploads the playable build. Native JavaScript has no separate TypeScript compilation step.
-
-## Scope and documentation
-
-Current prototype only: one 64×48 basin, 16 settlers, 80-structure performance target, keyboard/mouse, 1280×720 or larger. It supports local restoration and sandbox continuation. These are implementation limits, not accepted final scope. Persistent multiplayer, territorial conquest and connected realms remain required work in the [revised design](docs/GAME_DESIGN.md).
-
-- [Architecture](docs/ARCHITECTURE.md)
-- [QA report and performance](docs/QA_REPORT.md)
-- [Release notes](docs/RELEASE_NOTES.md)
-- [Credits and rights](docs/CREDITS.md)
-- [Changelog](CHANGELOG.md)
-- [Current completion criteria](docs/V1_COMPLETION_CRITERIA.md)
-- [Agent handoff](CODEX_START_HERE.md)
+Research: [sampled gameplay review](docs/GAMEPLAY_VIDEO_REVIEW.md), [developer/player review](docs/DEVELOPER_AND_PLAYER_REVIEW.md). Production evidence and remaining gates: [status](docs/PRODUCTION_STATUS.md). Historical restoration code and its QA are retained for regression only; npm run legacy serves that earlier prototype on port 4173.

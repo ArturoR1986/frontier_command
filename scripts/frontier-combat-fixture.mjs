@@ -1,0 +1,3 @@
+import {mkdir,access} from 'node:fs/promises';import path from 'node:path';import {Authority} from '../src/frontier/authority.js';import {combatFixture} from '../src/frontier/combat-fixture.js';
+const dir=path.resolve('data/review-combat-'+new Date().toISOString().replace(/[:.]/g,'-'));await mkdir(dir,{recursive:true});const file=path.join(dir,'world.sqlite');let exists=false;try{await access(file);exists=true;}catch{}if(exists)throw Error('Refusing to overwrite an existing rehearsal.');
+const a=new Authority(file,{size:128});a.world=combatFixture();a.close();console.log('Prepared combat rehearsal: '+dir+' (separate from the player colony)');

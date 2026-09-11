@@ -57,16 +57,17 @@ export class Authority {
     this.transaction(() => this.append(event)); this.apply(event);
   }
   lobby() { return { colonies: this.world.factions.map(f => ({ id: f.id, name: f.name, color: f.color, claimed: f.claimed, realm: regionOf(this.world, f.home).realm })), policy: this.world.policy }; }
-  view(token, requested, includeTerrain = true) {
+  view(token, requested, includeTerrain = true, terrainRevision = -1) {
     const a = this.account(token); if (!a) throw new Error('Invalid colony access key.');
     const w = this.world, f = factionOf(w, a.faction), r = regionOf(w, requested) || regionOf(w, f.home);
+    includeTerrain ||= terrainRevision !== (r.terrainRevision || 0);
     const vision = e => e.faction === f.id || allied(w, f.id, e.faction) || explored(r, f.id, e.x, e.y) && locals(w, r).some(p => p.faction === f.id && Math.hypot(e.x - p.x, e.y - p.y) < 22);
     const entities = w.entities.filter(e => e.region === r.id && (e.faction === f.id || !e.vehicle && vision(e))).map(e => {
       if (e.faction === f.id) return e;
       return { id: e.id, name: e.name, type: e.type, kind: e.kind, faction: e.faction, x: e.x, y: e.y, hp: e.hp, maxHp: e.maxHp, disabled: e.disabled, shot: e.shot };
     });
     return {
-      schema: w.schema, time: w.time, revision: w.revision, faction: f, policy: w.policy,
+      scenario: w.scenario, schema: w.schema, time: w.time, revision: w.revision, faction: f, policy: w.policy,
       region: { ...r, terrain: includeTerrain ? r.terrain : undefined, fertility: includeTerrain ? r.fertility : undefined, explored: { [f.id]: r.explored[f.id] || [] }, buildings: r.buildings.filter(b => b.faction === f.id || vision(b)).map(b => b.faction === f.id ? b : { id: b.id, faction: b.faction, kind: b.kind, x: b.x, y: b.y, hp: b.hp, complete: b.complete }), nodes: r.nodes.filter(n => explored(r, f.id, n.x, n.y)), drops: r.drops.filter(n => explored(r, f.id, n.x, n.y)) },
       entities, stocks: stock(r, f.id), factions: w.factions.map(o => ({ id: o.id, name: o.name, color: o.color, home: o.home, subjectOf: o.subjectOf })),
       world: w.regions.map(n => ({ id: n.id, name: n.name, realm: n.realm, gx: n.gx, gy: n.gy, owner: n.owner, resource: n.resource, occupation: n.occupation, distanceKm: n.distanceKm })),

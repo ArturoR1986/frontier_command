@@ -9,3 +9,6 @@ No extracted commercial-game art, recordings, maps, text or UI assets are includ
 Development tooling includes Node.js, Playwright and GitHub Actions. No third-party game asset packs or remote runtime dependencies are bundled.
 
 This notice grants no open-source license. Rights remain with their respective owners; the creator may choose a distribution license separately.
+
+
+Current persistent prototype artwork in src/frontier/render.js and facilities.js is original code-generated geometry authored for this project. The reference videos supplied design observations; no commercial sprites, soundtracks, thumbnails or video assets are bundled.

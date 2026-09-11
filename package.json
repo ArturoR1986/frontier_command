@@ -1,9 +1,11 @@
 {
   "name": "frontier-command",
-  "version": "1.0.0-dev.1",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=22" },
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
     "dev": "node scripts/frontier-server.mjs",
     "legacy": "node scripts/serve.mjs",
@@ -11,6 +13,9 @@
     "build": "node scripts/build.mjs",
     "check": "node scripts/check.mjs",
     "test": "node --test",
-    "smoke": "node scripts/smoke.mjs"
+    "smoke": "node scripts/frontier-http-smoke.mjs --package",
+    "legacy:build": "node scripts/legacy-build.mjs",
+    "legacy:smoke": "node scripts/smoke.mjs",
+    "backup": "node scripts/frontier-backup.mjs"
   }
 }

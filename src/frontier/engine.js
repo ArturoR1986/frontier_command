@@ -11,7 +11,7 @@ export const skillFactor = (e, key) => 1 + skillLevel(e, key) * 0.055;
 export function note(w, faction, text, tone = 'info') { w.events.push({ id: id(w), at: w.time, faction, text, tone }); if (w.events.length > 300) w.events.shift(); }
 export function makeBuilding(w, r, faction, kind, x, y, complete = false) {
   const d = B[kind], b = { id: id(w), faction, kind, x, y, hp: d.hp, complete, progress: complete ? d.work : 0, delivered: emptyStock(), inventory: emptyStock(), queue: [], growth: 0, tending: 0, powered: !d.demand, active: 'Waiting for work', bill: 24, cooldown: 0 };
-  r.buildings.push(b); r.topology++; return b;
+  r.buildings.push(b); if (!['floor','field'].includes(kind)) r.topology++; return b;
 }
 export function makePerson(w, faction, region, x, y, index = 0) {
   const names = ['Mara', 'Tomas', 'Lena', 'Kei', 'Ada', 'Ivo', 'Nico', 'Sora', 'Jules', 'Remy', 'Sol', 'Ash'];
@@ -66,7 +66,7 @@ function usable(e) { return e.hp > 20 && !e.wounded; }
 function operator(w, e) { return e.type === 'vehicle' ? e.crew.map(i => entityOf(w, i)).find(p => p && usable(p) && p.hunger > 10 && p.rest > 8) : null; }
 export function machineSpeed(w, e) { if (e.type === 'person') return 1.7 * (e.wounded ? 0.45 : 1); const d = M[e.kind]; return d.speed * (e.type === 'vehicle' ? operator(w, e) && e.fuel > 0 && !e.disabled ? skillFactor(operator(w, e), 'pilot') : 0 : 1); }
 function at(r, e, target, adjacent = true) {
-  const d = target.kind && B[target.kind], w = d?.w || 1, h = d?.h || 1;
+  const d = target.kind && B[target.kind]; if (!adjacent) return distance(e,target) <= .75; if (target.type) return distance(e,target) <= 2.1; const w = d?.w || 1, h = d?.h || 1;
   const dx = Math.max(0, target.x - e.x, e.x - (target.x + w)), dy = Math.max(0, target.y - e.y, e.y - (target.y + h));
   return Math.hypot(dx, dy) <= (adjacent ? 1.2 : 0.7);
 }
@@ -110,16 +110,17 @@ export function placement(w, r, faction, kind, x, y) {
     if (!inside(r, xx, yy)) return 'Outside the map.';
     if (!explored(r, faction, xx, yy)) return 'Explore this ground first.';
     if (!walkable(r, xx, yy, B, faction)) return 'Rock, water or a structure blocks this ground.';
-    if (r.buildings.some(b => b.hp > 0 && xx >= b.x && yy >= b.y && xx < b.x + B[b.kind].w && yy < b.y + B[b.kind].h)) return 'Another plan occupies this ground.';
+    if (r.buildings.some(b => b.hp > 0 && !(b.kind === 'floor' && kind !== 'floor') && xx >= b.x && yy >= b.y && xx < b.x + B[b.kind].w && yy < b.y + B[b.kind].h)) return 'Another plan occupies this ground.';
     if (r.nodes.some(n => n.amount > 0 && n.x === xx && n.y === yy)) return 'Gather the resource on this tile first.';
   }
   const fake = { id: 'preview', kind, x, y, hp: d.hp, faction };
   const topology = r.topology;
-  r.buildings.push(fake); r.topology++;
+  const affectsRoutes = !d.pass || kind === 'door';
+  if (affectsRoutes) { r.buildings.push(fake); r.topology++; }
   const people = locals(w, r).filter(e => e.faction === faction && e.type === 'person');
   const reachable = people.some(e => route(r, e, fake, B, faction, true) !== null);
   const trapped = !d.pass && people.some(e => stores(r, faction).length && !stores(r, faction).some(s => route(r, e, s, B, faction, true) !== null));
-  r.buildings.pop(); r.topology = topology;
+  if (affectsRoutes) { r.buildings.pop(); r.topology = topology; }
   return !reachable ? 'No worker can reach the construction edge.' : trapped ? 'This would seal a worker away from supplies. Leave a door.' : '';
 }
 function inTransit(w, target, kind) { return w.entities.reduce((s, e) => s + (e.cargo?.destination === target && e.cargo.kind === kind ? e.cargo.amount : e.job?.type === 'fetch' && e.job.destination === target && e.job.kind === kind ? e.job.amount : 0), 0); }
@@ -131,17 +132,24 @@ function supplyJob(w, r, e, b, cost) {
   job(e, 'fetch', source, { destination: b.id, kind, amount: Math.min(12, total - b.delivered[kind] - inTransit(w, b.id, kind)) }); return true;
 }
 function chooseJob(w, r, e) {
-  const available = o => !e.blockedTargets?.[o.id] || e.blockedTargets[o.id].until <= w.time || e.blockedTargets[o.id].topology !== r.topology;
+  const enemies=locals(w,r).filter(o=>hostile(w,e.faction,o.faction)&&!o.disabled&&(o.type==='robot'||o.type==='vehicle'&&operator(w,o)||o.type==='person'&&o.drafted));
+  const safe=o=>!enemies.some(enemy=>distance(o,enemy)<(M[enemy.kind]?.range||9)+3);
+  const available = o => safe(o) && (!e.blockedTargets?.[o.id] || e.blockedTargets[o.id].until <= w.time || e.blockedTargets[o.id].topology !== r.topology);
   const bs = r.buildings.filter(b => b.hp > 0 && b.faction === e.faction && available(b)), f = factionOf(w, e.faction);
+  if (e.hunger < 45 && e.cargo && ['food','meals'].includes(e.cargo.kind) && e.cargo.amount >= 1) { e.cargo.amount--; e.hunger=Math.min(100,e.hunger+(e.cargo.kind==='meals'?45:28));if(!e.cargo.amount)e.cargo=null;e.activity='Eating a carried ration';return; }
   if (e.cargo) {
     const destination = object(w, r, e.cargo.destination);
-    let b = destination && destination.hp > 0 && destination.faction === e.faction ? destination : nearest(stores(r, e.faction), e);
+    let b = destination && destination.hp > 0 && destination.faction === e.faction && safe(destination) ? destination : nearest(stores(r, e.faction).filter(safe), e);
     if (!b) { b = bs.find(b => !b.complete && (B[b.kind].cost[e.cargo.kind] || 0) > b.delivered[e.cargo.kind] + inTransit(w, b.id, e.cargo.kind)); if (b) e.cargo.destination = b.id; }
     if (b) job(e, 'deliver', b);
     else if (bs.some(b => !b.complete)) { r.drops.push({ id: id(w), x: e.x, y: e.y, kind: e.cargo.kind, amount: e.cargo.amount, faction: e.faction }); e.cargo = null; e.activity = 'Caching surplus supplies for the new outpost'; }
     else e.activity = 'Carrying supplies — plan a stockyard or colony hearth'; return;
   }
   if (e.hunger < 55) { const b = nearest(stores(r, e.faction).filter(b => b.inventory.meals >= 1 || b.inventory.food >= 1), e); if (b) { job(e, 'eat', b); return; } }
+  if(e.hunger < 55 && !stores(r,e.faction).some(b=>b.inventory.food>=1||b.inventory.meals>=1)) {
+    const food=nearest([...r.drops,...r.nodes].filter(n=>['food','meals'].includes(n.kind)&&n.amount>=1&&(!n.faction||n.faction===e.faction)&&available(n)&&explored(r,e.faction,n.x,n.y)),e);
+    if(food && explored(r,e.faction,food.x,food.y)){job(e,'fieldEat',food);return;}
+  }
   if (!e.drafted && e.priorities.care && e.hp > 20 && e.rest >= 60) {
     const hurt = nearest(locals(w, r).filter(p => p.type === 'person' && p.faction === e.faction && p.hp < 65 && p.id !== e.id && (p.wounded || p.job?.type === 'rest')), e);
     if (hurt && (stock(r, e.faction).medicine >= 1 || stock(r, e.faction).food >= 2)) { job(e, 'care', hurt); return; }
@@ -149,7 +157,7 @@ function chooseJob(w, r, e) {
   if (e.wounded || e.rest < 25) {
     const beds = bs.filter(b => b.complete && B[b.kind].beds), b = beds.find(b => b.id === e.home) || nearest(beds, e);
     if (b) { job(e, 'rest', b); return; }
-    e.rest = Math.min(30, e.rest + 0.05); e.activity = 'Sleeping outdoors — needs a bed'; return;
+    job(e,'camp',{id:null},{point:{x:e.x,y:e.y}}); e.activity='Resting at a field camp'; return;
   }
   if (e.belonging < 35) { const b = nearest(bs.filter(b => b.complete && b.kind === 'table'), e); if (b) { job(e, 'social', b); return; } }
   if (e.drafted) { e.activity = 'Drafted — awaiting orders'; return; }
@@ -165,7 +173,7 @@ function chooseJob(w, r, e) {
         if (supplyJob(w, r, e, b, B[b.kind].cost)) return;
         if (Object.entries(B[b.kind].cost).every(([k, n]) => b.delivered[k] >= n)) { job(e, 'build', b); return; }
       }
-      const damaged = nearest([...bs.filter(b => b.complete && b.hp < B[b.kind].hp), ...locals(w, r).filter(v => v.type !== 'person' && v.faction === e.faction && v.hp < v.maxHp)], e);
+      const damaged = nearest([...bs.filter(b => b.complete && b.hp < B[b.kind].hp), ...locals(w, r).filter(v => v.type !== 'person' && v.faction === e.faction && v.hp < v.maxHp && safe(v))], e);
       if (damaged && stock(r, e.faction).parts >= 1) { job(e, 'repair', damaged); return; }
     }
     if (key === 'grow') {
@@ -179,7 +187,7 @@ function chooseJob(w, r, e) {
     }
     if (key === 'craft' || key === 'cook' || key === 'care') {
       if (key === 'craft') {
-        const vehicle = nearest(locals(w, r).filter(v => v.faction === e.faction && v.type === 'vehicle' && v.fuel + inTransit(w, v.id, 'fuel') < 30), e);
+        const vehicle = nearest(locals(w, r).filter(v => v.faction === e.faction && v.type === 'vehicle' && v.fuel + inTransit(w, v.id, 'fuel') < 30 && safe(v)), e);
         const source = vehicle && nearest(stores(r, e.faction).filter(b => b.inventory.fuel > 0), e);
         if (source) { job(e, 'fetch', source, { destination: vehicle.id, kind: 'fuel', amount: Math.min(12, 30 - vehicle.fuel - inTransit(w, vehicle.id, 'fuel')) }); return; }
       }
@@ -205,8 +213,9 @@ function doJob(w, r, e, dt) {
   if (!t || t.hp <= 0 && !t.disabled) { clear(e); return; }
   if (t.faction && t.faction !== e.faction) { clear(e); return; }
   if (j.type === 'attackMove' && e.engaged) return;
-  e.activity = ({ fetch: `Fetching ${j.kind}`, deliver: `Carrying ${e.cargo?.kind || 'supplies'}`, build: 'Constructing', gather: 'Gathering', grow: 'Tending crops', eat: 'Going for food', rest: 'Resting', social: 'Meeting neighbors', research: 'Studying', craft: 'Producing', fabricate: 'Fabricating', repair: 'Repairing', train: 'Operator practice', care: 'Treating wounds', move: 'Moving', attackMove: 'Advancing' })[j.type] || j.type;
-  if (!approach(w, r, e, t, dt, !['move', 'attackMove'].includes(j.type))) return;
+  if(e.type==='person'&&!e.drafted&&['fetch','build','gather','craft','fabricate','repair','train','research'].includes(j.type)&&locals(w,r).some(enemy=>hostile(w,e.faction,enemy.faction)&&!enemy.disabled&&(M[enemy.kind]?.damage||enemy.drafted)&&distance(t,enemy)<(M[enemy.kind]?.range||9)+3)){clear(e);e.activity='Work paused — fighting nearby';return;}
+  e.activity = ({ fetch: `Fetching ${j.kind}`, deliver: `Carrying ${e.cargo?.kind || 'supplies'}`, build: 'Constructing', gather: 'Gathering', grow: 'Tending crops', eat: 'Going for food', rest: 'Resting', social: 'Meeting neighbors', research: 'Studying', fieldEat: 'Eating field provisions', camp: 'Resting at a field camp', craft: 'Producing', fabricate: 'Fabricating', repair: 'Repairing', train: 'Operator practice', care: 'Treating wounds', move: 'Moving', attackMove: 'Advancing' })[j.type] || j.type;
+  if (!approach(w, r, e, t, dt, !['move', 'attackMove', 'camp'].includes(j.type))) return;
   const bonus = factionOf(w, e.faction).tech.includes('tools') ? 1.2 : 1;
   if (j.type === 'fetch') {
     const dest = object(w, r, j.destination);
@@ -229,12 +238,12 @@ function doJob(w, r, e, dt) {
   } else if (j.type === 'build') {
     if (t.complete) { clear(e); return; }
     t.progress += dt * skillFactor(e, 'build') * bonus; practice(e, 'build', dt); t.active = 'Construction in progress';
-    if (t.progress >= B[t.kind].work) { t.complete = true; t.delivered = emptyStock(); t.active = 'Ready'; remember(w, e, `Helped build ${B[t.kind].name}`, 3); note(w, e.faction, `${B[t.kind].name} is ready.`); clear(e); }
+    if (t.progress >= B[t.kind].work) { t.complete = true; t.delivered = emptyStock(); t.active = 'Ready'; remember(w, e, `Helped build ${B[t.kind].name}`, 3); if (!['floor','wall'].includes(t.kind)) note(w, e.faction, `${B[t.kind].name} is ready.`); clear(e); }
   } else if (j.type === 'gather') {
     j.work += dt * skillFactor(e, 'gather') * bonus; practice(e, 'gather', dt);
     if (j.work >= (t.kind === 'wood' || t.kind === 'food' ? 5 : 9)) {
       const n = Math.min(12, t.amount); t.amount -= n; e.cargo = n ? { kind: t.kind, amount: n } : null;
-      if (!t.amount && r.terrain[tile(r, t.x, t.y)] === 2) { r.terrain[tile(r, t.x, t.y)] = 0; r.topology++; }
+      if (!t.amount && r.terrain[tile(r, t.x, t.y)] === 2) { r.terrain[tile(r, t.x, t.y)] = 0; r.topology++; r.terrainRevision = (r.terrainRevision || 0) + 1; }
       clear(e);
     }
   } else if (j.type === 'grow') {
@@ -242,6 +251,11 @@ function doJob(w, r, e, dt) {
     if (j.work >= 12) { if (t.growth >= 1) { e.cargo = { kind: 'food', amount: 28 }; t.growth = 0; remember(w, e, 'Brought in a harvest', 2); } t.tending = 1; clear(e); }
   } else if (j.type === 'eat') {
     const k = t.inventory.meals >= 1 ? 'meals' : 'food'; if (t.inventory[k] >= 1) { t.inventory[k]--; e.hunger = Math.min(100, e.hunger + (k === 'meals' ? 45 : 28)); if (k === 'meals') e.morale = Math.min(100, e.morale + 2); } clear(e);
+  } else if (j.type === 'fieldEat') {
+    j.work+=dt;if(j.work>=3){if(t.amount>=1){t.amount--;e.hunger=Math.min(100,e.hunger+(t.kind==='meals'?45:28));}clear(e);}
+  } else if (j.type === 'camp') {
+    e.activity='Resting at a field camp';e.rest=Math.min(100,e.rest+dt*.11);if(!e.wounded && e.hunger>35)e.hp=Math.min(100,e.hp+dt*.012);
+    if(e.rest>=65||e.hunger<18)clear(e);
   } else if (j.type === 'rest') {
     const enclosed = roomComfort(r, t), rate = t.kind === 'clinic' ? 0.4 : 0.23 + enclosed * 0.2;
     e.rest = Math.min(100, e.rest + dt * rate); if (!e.wounded) e.hp = Math.min(100, e.hp + dt * 0.035);
@@ -486,7 +500,17 @@ function ai(w, f) {
   if (factory && !factory.queue.length && w.entities.filter(e => e.faction === f.id && e.type === 'robot' && e.hp > 0).length < 16 && canPay(r, f.id, M.guard.cost)) factory.queue.push({ id: id(w), kind: 'guard' });
   if (garage && !garage.queue.length && !w.entities.some(e => e.faction === f.id && e.type === 'vehicle')) garage.queue.push({ id: id(w), kind: 'hauler' });
   if (!f.recruiting && workers.length < 8 && r.buildings.filter(b => b.complete).reduce((s, b) => s + (B[b.kind].beds || 0), 0) > workers.length && pay(r, f.id, { meals: 15, wood: 20 })) f.recruiting = { work: 0 };
-  aiExpedition(w, f, r, workers);
+  aiOutposts(w,f,workers); aiExpedition(w, f, r, workers);
+}
+function aiOutposts(w,f,workers) {
+  for(const r of w.regions.filter(r=>r.owner===f.id&&r.id!==f.home)){
+    const people=workers.filter(e=>e.region===r.id&&!e.vehicle&&!e.journey),seat=stores(r,f.id)[0];if(!people.length||!seat)continue;
+    for(const n of r.nodes)if(n.amount>0&&explored(r,f.id,n.x,n.y)&&['food','wood'].includes(n.kind))n.marked=f.id;
+    for(const e of people){e.drafted=false;e.priorities.build=1;e.priorities.grow=2;e.priorities.gather=3;}
+    const beds=r.buildings.filter(b=>b.faction===f.id&&b.hp>0&&b.kind==='bed').length,kind=beds<people.length?'bed':!r.buildings.some(b=>b.faction===f.id&&b.hp>0&&b.kind==='field')?'field':null;
+    if(!kind||!canPay(r,f.id,B[kind].cost))continue;
+    for(let i=0;i<8;i++){const angle=i*Math.PI/4,x=Math.max(1,Math.floor(seat.x+Math.cos(angle)*8)),y=Math.max(1,Math.floor(seat.y+Math.sin(angle)*8));if(!placement(w,r,f.id,kind,x,y)){makeBuilding(w,r,f.id,kind,x,y);break;}}
+  }
 }
 function aiExpedition(w, f, home, workers) {
   if (!f.tech.includes('transport')) return;
@@ -510,6 +534,7 @@ function aiExpedition(w, f, home, workers) {
   }
   const v = w.entities.find(e => e.faction === f.id && e.type === 'vehicle' && e.kind === 'hauler' && e.region === home.id && !e.journey && !e.disabled);
   if (!v || v.fuel < 20 || workers.length < 7) return;
+  if (!canPay(home,f.id,{food:60,wood:30,stone:40,ore:35,parts:15})) return;
   if (v.crew.length < 2) {
     const candidate = workers.find(e => e.region === home.id && !e.vehicle && !e.journey && usable(e) && e.id !== f.scoutId && e.rest > 40 && e.hunger > 50);
     if (!candidate) return;
@@ -523,10 +548,24 @@ function aiExpedition(w, f, home, workers) {
   const q = journeyQuote(w, f.id, home.id, target.id, [v.id], cargo); if (q.error) return;
   try { const result = command(w, f.id, { type: 'travel', region: home.id, destination: target.id, ids: [v.id], cargo }); f.expedition = { journey: result.id, target: target.id, vehicle: v.id }; } catch {}
 }
+export function separateUnits(w,r,dt) {
+  const units=locals(w,r).filter(e=>!M[e.kind]?.flying),cells=new Map();
+  for(const e of units){const key=Math.floor(e.x/3)+','+Math.floor(e.y/3);if(!cells.has(key))cells.set(key,[]);cells.get(key).push(e);}
+  for(const e of units){const cx=Math.floor(e.x/3),cy=Math.floor(e.y/3);for(let yy=cy-1;yy<=cy+1;yy++)for(let xx=cx-1;xx<=cx+1;xx++)for(const o of cells.get(xx+','+yy)||[]){if(e.id>=o.id)continue;
+    const gap=(e.type==='vehicle'?.8:.34)+(o.type==='vehicle'?.8:.34);let dx=e.x-o.x,dy=e.y-o.y,dist=Math.hypot(dx,dy);if(dist>=gap)continue;
+    if(dist<.001){const angle=hash(Number(e.id.replace(/\D/g,''))||0,Number(o.id.replace(/\D/g,''))||0,17)*Math.PI*2;dx=Math.cos(angle);dy=Math.sin(angle);}else{dx/=dist;dy/=dist;}
+    const ew=e.type==='vehicle'&&!e.route?.length?0:1,ow=o.type==='vehicle'&&!o.route?.length?0:1,total=ew+ow;if(!total)continue;const shift=Math.min(gap-dist,dt*3.6)/total;for(const [p,sign,weight]of [[e,1,ew],[o,-1,ow]]){if(!weight)continue;const x=p.x+dx*shift*sign,y=p.y+dy*shift*sign;if(walkable(r,x,y,B,p.faction)){p.x=x;p.y=y;}}
+  }}
+}
 export function step(w, dt = 0.1) {
   if (!Number.isFinite(dt) || dt <= 0 || dt > 60) throw new Error('Simulation step must be between 0 and 60 seconds.');
   const before = w.time; w.time += dt; w.revision++;
   updateJourneys(w);
+  for(const v of w.entities.filter(e=>e.type==='vehicle'&&e.hp>0&&!e.journey&&!e.job&&e.crew.length)) {
+    const crew=v.crew.map(id=>entityOf(w,id));if(!crew.some(e=>e.hunger<25||e.rest<20))continue;const r=regionOf(w,v.region);
+    if(!r||locals(w,r).some(e=>hostile(w,v.faction,e.faction)&&distance(e,v)<26))continue;
+    try{command(w,v.faction,{type:'disembark',id:v.id});v.activity='Parked — crew taking food and rest';note(w,v.faction,v.name+' parked for a crew break. Assign a rested operator before moving again.');}catch{}
+  }
   for (const e of w.entities.filter(e => e.type === 'person' && e.vehicle && !e.journey && e.hp > 0)) { e.hunger = Math.max(0, e.hunger - dt * .025); e.rest = Math.max(0, e.rest - dt * .008); if (!e.hunger) e.hp = Math.max(1, e.hp - dt * .02); }
   for (const r of w.regions) {
     if (!r.buildings.length && !w.entities.some(e => e.region === r.id)) continue;
@@ -539,12 +578,12 @@ export function step(w, dt = 0.1) {
       if (e.type === 'person') {
         e.hunger = Math.max(0, e.hunger - dt * 0.025); e.rest = Math.max(0, e.rest - dt * 0.008); e.belonging = Math.max(0, e.belonging - dt * 0.004);
         if (!e.hunger) e.hp = Math.max(1, e.hp - dt * 0.02);
-        if (e.job && !['eat', 'rest', 'care', 'deliver'].includes(e.job.type) && !e.drafted && (e.hunger < 18 || e.rest < 8 || e.wounded)) clear(e);
+        if (e.job && !['eat', 'fieldEat', 'rest', 'camp', 'care', 'deliver'].includes(e.job.type) && !e.drafted && (e.hunger < 18 || e.rest < 8 || e.wounded)) clear(e);
         if (!e.job) chooseJob(w, r, e);
       }
       if (e.job && e.job.type !== 'attack') doJob(w, r, e, dt);
     }
-    combat(w, r, dt); occupation(w, r, dt);
+    separateUnits(w,r,dt); combat(w, r, dt); occupation(w, r, dt);
     r.drops = r.drops.filter(d => d.amount > 0);
   }
   for (const f of w.factions) { recruit(w, f, dt); if (f.ai && Math.floor(before / 30) !== Math.floor(w.time / 30)) ai(w, f); }
@@ -558,6 +597,19 @@ function own(w, faction, ids, region) {
 export function command(w, faction, c) {
   const f = factionOf(w, faction), r = regionOf(w, c?.region); if (!f || !c || typeof c.type !== 'string') throw new Error('Invalid colony command.');
   if (['build', 'designate', 'research', 'recruit', 'queue', 'cancel', 'bill', 'claim'].includes(c.type) && !r) throw new Error('Choose a region.');
+  if (c.type === 'buildBatch') {
+    if (!r || !['wall','floor'].includes(c.kind) || !Array.isArray(c.tiles) || !c.tiles.length || c.tiles.length > 144 || c.tiles.some(p => !p || !Number.isInteger(p.x) || !Number.isInteger(p.y))) throw new Error('Choose up to 144 valid wall or floor tiles.');
+    const ids=[], skipped=[], seen=new Set();
+    for(const p of c.tiles) { const key=p.x+','+p.y;if(seen.has(key))continue;seen.add(key); const error=placement(w,r,faction,c.kind,p.x,p.y); if(error){skipped.push({...p,reason:error});continue;} ids.push(makeBuilding(w,r,faction,c.kind,p.x,p.y).id); }
+    if(!ids.length) throw new Error(skipped[0]?.reason || 'No new ground selected.');
+    return {ids, skipped, message: ids.length+' '+B[c.kind].name.toLowerCase()+' plans placed'+(skipped.length?' · '+skipped.length+' blocked tiles skipped. '+skipped[0].reason:'. Workers will deliver materials.')};
+  }
+  if (c.type === 'researcher') {
+    const [e]=own(w,faction,[c.id],c.region); if(e.type!=='person') throw new Error('Choose a civilian researcher.');
+    for(const k of ROLES) if(e.priorities[k]===1 && k!=='care')e.priorities[k]=2;
+    e.priorities.research=1; e.drafted=false; clear(e);
+    return {message:e.name+' will prioritize study, with food, rest and urgent care still taking precedence.'};
+  }
   if (c.type === 'build') {
     // A hostile territorial seat may be built during an already declared occupation.
     const original = r.owner; if (c.kind === 'relay' && r.occupation?.faction === faction) r.owner = faction;

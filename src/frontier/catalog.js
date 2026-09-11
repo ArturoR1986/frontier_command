@@ -7,7 +7,7 @@ export const STRUCTURES = {
   stockpile: { name: 'Stockyard', w: 4, h: 3, cost: { wood: 12 }, work: 20, hp: 250, storage: true, description: 'A nearby drop-off shortens every gathering and construction trip.' },
   wall: { name: 'Stone wall', w: 1, h: 1, cost: { stone: 4 }, work: 8, hp: 700, description: 'Blocks walking and fire. Place doors for access.' },
   door: { name: 'Timber door', w: 1, h: 1, cost: { wood: 6 }, work: 10, hp: 220, pass: true, description: 'Friendly workers pass; hostile units must break through.' },
-  floor: { name: 'Timber floor', w: 1, h: 1, cost: { wood: 2 }, work: 3, hp: 100, pass: true, description: 'Dry, comfortable footing. Improves nearby rest and work.' },
+  floor: { name: 'Timber floor', w: 1, h: 1, cost: { wood: 2 }, work: 3, hp: 100, pass: true, description: 'Lay floors before furnishing a room. Floored, enclosed bedrooms restore rest faster.' },
   bed: { name: 'Personal bed', w: 1, h: 2, cost: { wood: 12 }, work: 18, hp: 120, beds: 1, description: 'Assign a home to reduce walking. Enclosed bedrooms restore rest faster.' },
   table: { name: 'Gathering table', w: 2, h: 2, cost: { wood: 18 }, work: 25, hp: 150, description: 'Shared meals restore belonging. Nearby residents form friendships.' },
   field: { name: 'Growing plot', w: 5, h: 5, cost: {}, work: 20, hp: 180, pass: true, description: 'Plant and tend food. Fertile soil improves harvest; crops need labor.' },
