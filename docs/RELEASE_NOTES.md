@@ -1,6 +1,6 @@
-# Frontier Command 1.0 release candidate
+# Frontier Command 1.0
 
-Guidance revision 0.2: original civic expedition strategy in Ashwater Basin. Completion evidence will be recorded in FINAL_QA_REPORT.md after final verification.
+Guidance revision 0.2: original civic expedition strategy in Ashwater Basin. All completion gates passed; FINAL_QA_REPORT.md records the exact tested source and package.
 
 Four settlers establish a settlement, organize labor and care, and restore a water station, survey archive and warning relay. The same people gather/build, recover from injuries and take field duty, so expeditions compete with civilian production. Homes, a shared Commons and three work charters make settlement organization consequential. Three restorations plus a healthy, connected community earn Independent Basin; sandbox play continues.
 

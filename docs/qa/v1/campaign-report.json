@@ -1,0 +1,60 @@
+[
+  {
+    "phase": "Prepared settlement",
+    "time": 275,
+    "stock": {
+      "alloy": 105,
+      "biomass": 100,
+      "food": 68
+    },
+    "team": [
+      62,
+      63,
+      65,
+      77
+    ]
+  },
+  {
+    "phase": "water restored",
+    "time": 324.25,
+    "people": 7,
+    "treated": 0,
+    "stock": {
+      "alloy": 129,
+      "biomass": 80,
+      "food": 68
+    }
+  },
+  {
+    "phase": "archive restored",
+    "time": 408.25,
+    "people": 7,
+    "treated": 0,
+    "stock": {
+      "alloy": 129,
+      "biomass": 92,
+      "food": 100
+    }
+  },
+  {
+    "phase": "signal restored",
+    "time": 502.75,
+    "people": 7,
+    "treated": 0,
+    "stock": {
+      "alloy": 129,
+      "biomass": 80,
+      "food": 116
+    }
+  },
+  {
+    "phase": "Independent basin and continued play",
+    "time": 562.75,
+    "community": {
+      "charter": "recovery",
+      "treated": 0,
+      "sharedMeals": 0,
+      "achievement": true
+    }
+  }
+]

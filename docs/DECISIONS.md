@@ -27,3 +27,11 @@ The phrases about wilderness becoming infrastructure and growth increasing expos
 ## Recording future decisions
 
 For material choices record: date/status, source observation or user goal, selected design, alternatives, reason/tradeoff, experiment or acceptance test, and result when known. Separate a planned test from its executed result. Ordinary reversible decisions do not require creator approval.
+
+## 2026-09-11 — Civic expedition strategy selected and verified
+
+Status: implemented in release runtime 6814c55. After the reference comparison in REFERENCE_FINDINGS.md, choose a small restoration community whose workers also supply field teams and care. Alternatives were a large-army RTS with light needs, or a deep-room colony simulator with incidental defense. The selected design makes mobilization remove real civilian labor, makes wounds require another person's time/provisions, and makes remote restoration return economic and warning capabilities.
+
+Retain the independently implemented Ashwater setting, deterministic simulation and physical economy because they support this synthesis; the old trials are not the code foundation or acceptance roster. Extend the social/active-progression layers that the corrected brief exposed as missing. Bound v1 at one basin, sixteen people, twelve structures, three improvements and three restored installations, with continued sandbox after achievement. The tradeoff is approachable tactical depth and compact social modeling rather than large armies or simulated relationships.
+
+Executed evidence: all three sites restored using real travel/combat/deliveries; duty preserves loaded cargo across save and resume; care restores a wounded specialist at a two-food staffing cost; depot/home comparisons and charter/reward comparisons demonstrate actual effects. Static checks, 35 tests, browser civic/expedition sessions and the extracted package pass. Final evidence and exact package hash are recorded in FINAL_QA_REPORT.md.

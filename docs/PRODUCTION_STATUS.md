@@ -2,12 +2,14 @@
 
 2026-09-11 · guidance revision 0.2 · owner Codex · Issue #1.
 
-Current milestone: implementation and representative play review complete; final release-candidate verification and packaging.
+Current milestone: v1.0 completion gates PASS. Runtime commit 6814c55daa59f36786747b69caacc87fb20528ff. Final evidence-only changes document the already tested runtime; no further game implementation remains.
 
-Main guidance 051747f was safely reconciled in merge f93571c. A subsequent fetch confirmed no newer main guidance. Original code was retained after focused classic StarCraft/RimWorld study and extended into civic expedition strategy. The corrected design, bounded scope and reference evidence are in GAME_DESIGN.md, PRODUCTION_PLAN.md and REFERENCE_FINDINGS.md.
+Focused classic StarCraft/RimWorld source and visual study informed the finite civic expedition design. Corrected main 051747f was reconciled without discarding useful code or force-pushing; subsequent milestone/final fetches confirmed no newer guidance. See REFERENCE_FINDINGS.md, GAME_DESIGN.md, PRODUCTION_PLAN.md and DECISIONS.md.
 
-Implemented: physical economy/construction, terrain/defense, needs/roles, civilian-field work suspension, treatment provisions, homes, Commons, charter, three disclosed restoration expeditions and a persistent achievement. Format 2 retains civic and frontier state; format 1 migrates safely.
+Commands executed and passed: node scripts/check.mjs; node --test (35/35); node scripts/build.mjs; node --expose-gc scripts/profile.mjs; node scripts/smoke.mjs; node scripts/community-playtest.mjs; node scripts/opening-playtest.mjs (exact release commit, 20 simulated minutes at normal 4× browser speed); extracted-package check. Candidate push and PR CI both succeeded. Captures reviewed at normal/far/close, minimum desktop size and the 16-person/80-structure target load.
 
-Verified during production: 35 simulation/integration checks; browser community controls and care/save/reload/expedition/restoration; a real-browser 20-minute opening at 4×; deterministic hour; target-load profile below limits. Review caught and fixed same-cell path recovery, wounded-caregiver sleep deadlock, stale victory guidance, inaccurate safe-window text during voluntary combat and roster/button overlap.
+Playable entry: http://127.0.0.1:4173 while the local dist server runs. ZIP: artifacts/frontier-command-1.0.0-6814c55.zip. Standalone: extract, run node serve.mjs, open the address and choose Begin landing. Requires Node 22+ and Chrome/Edge; no installation of game dependencies or internet is needed.
 
-Exact next actions: commit the candidate; rebuild and rerun static, full tests, profile, smoke and community browser session; inspect new captures; test extracted ZIP; obtain CI; write FINAL_QA_REPORT.md with exact source/package evidence. Previous QA_REPORT.md is historical, not the corrected completion record. No claim that automated checks establish subjective fun or independent player feedback.
+FINAL_QA_REPORT.md is the authoritative completion record, including source/package hash, eight gate assessments, measurements, reviewed scenarios and non-blocking limitations. docs/qa/v1 preserves evidence. QA_REPORT.md and earlier candidate packages remain historical.
+
+Repository record: PR #2 carries the verified implementation and final evidence for Issue #1. GitHub records the merge/closure status. No further game work remains within the finite v1.0 plan; no external hosting deployment is required.

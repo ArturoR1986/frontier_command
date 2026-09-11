@@ -2,7 +2,7 @@
 
 Original real-time colony strategy in Ashwater Basin. Four named settlers build a home through visible gathering, hauling and construction. Organize homes, work, care and field duty, then restore three basin installations. Growth raises both capability and Exposure.
 
-Creator: Arturo Ruiz Albarrán. Implementation owner: Codex. Mission: [Issue #1](https://github.com/ArturoR1986/frontier_command/issues/1). See [production status](docs/PRODUCTION_STATUS.md) before treating a development milestone as a release.
+Creator: Arturo Ruiz Albarrán. Implementation owner: Codex. Mission: [Issue #1](https://github.com/ArturoR1986/frontier_command/issues/1). See [final QA](docs/FINAL_QA_REPORT.md) for the tested v1.0 scope, source, package and evidence.
 
 ## Run
 
